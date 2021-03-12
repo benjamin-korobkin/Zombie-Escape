@@ -12,9 +12,9 @@ def collided_with_wall(sprite, group, dir):
         # Generally bad practice to use list[0] but this works for now
         # with the yellow square we based on corner of rect, for sprite use center.
         if hits:
-            if sprite.vel.x > 0:  # sprite.x starts at top left of sprite
+            if hits[0].rect.centerx >= sprite.hit_rect.centerx:  # sprite.x starts at top left of sprite
                 sprite.pos.x = hits[0].rect.left - sprite.hit_rect.width / 2
-            elif sprite.vel.x < 0:
+            elif hits[0].rect.centerx <= sprite.hit_rect.centerx:
                 sprite.pos.x = hits[0].rect.right + sprite.hit_rect.width / 2
             sprite.vel.x = 0
             sprite.hit_rect.centerx = sprite.pos.x
@@ -23,9 +23,9 @@ def collided_with_wall(sprite, group, dir):
         # Stick to wall if we hit it
         # Generally bad practice to use list[0] but this works for now
         if hits:
-            if sprite.vel.y > 0:  # sprite.x starts at top left of sprite
+            if hits[0].rect.centery >= sprite.hit_rect.centery:
                 sprite.pos.y = hits[0].rect.top - sprite.hit_rect.height / 2
-            elif sprite.vel.y < 0:
+            elif hits[0].rect.centery <= sprite.hit_rect.centery:
                 sprite.pos.y = hits[0].rect.bottom + sprite.hit_rect.height / 2
             sprite.vel.y = 0
             sprite.hit_rect.centery = sprite.pos.y
@@ -49,6 +49,7 @@ class Player(pg.sprite.Sprite):
         self.vel = vec(0, 0)
         self.rot = 0  # rotation
         self.last_shot = 0
+        self.health = PLAYER_MAX_HEALTH
 
     def get_keys(self):
         self.rot_speed = 0
@@ -106,22 +107,43 @@ class Mob(pg.sprite.Sprite):
         self.acc = vec(0, 0)
         self.rect.center = self.pos
         self.rot = 0
+        self.max_health = 50
+        self.health = 50
+
+    def draw_health(self):
+        hp_percent = self.health / self.max_health
+        if hp_percent > .65:
+            col = GREEN
+        elif hp_percent > .45:
+            col = YELLOW
+        else:
+            col = RED
+        bar_width = int(self.rect.width * self.health / 100)
+        bar_height = 7
+        self.health_bar = pg.Rect(0, 0, bar_width, bar_height)
+        if self.health < self.max_health:
+            pg.draw.rect(self.image, col, self.health_bar)
 
     def update(self):
-        self.rot = (self.game.player.pos - self.pos).angle_to(vec(1, 0))
-        self.image = pg.transform.rotate(self.game.mob_img, self.rot)
-        self.rect = self.image.get_rect()
-        self.rect.center = self.pos
-        self.acc = vec(MOB_SPEED, 0).rotate(-self.rot)
-        self.acc += self.vel * -1  # friction to slow down movement
-        self.vel += self.acc * self.game.dt
-        # Using equation of motion
-        self.pos += self.vel * self.game.dt + (0.5 * self.acc * (self.game.dt ** 2))
-        self.hit_rect.centerx = self.pos.x
-        collided_with_wall(self, self.game.walls, 'x')
-        self.hit_rect.centery = self.pos.y
-        collided_with_wall(self, self.game.walls, 'y')
-        self.rect.center = self.hit_rect.center
+        if self.health <= 0:
+            self.kill()
+        else:
+            self.rot = (self.game.player.pos - self.pos).angle_to(vec(1, 0))
+            self.image = pg.transform.rotate(self.game.mob_img, self.rot)
+            self.rect = self.image.get_rect()
+            self.rect.center = self.pos
+            self.acc = vec(MOB_SPEED, 0).rotate(-self.rot)
+            self.acc += self.vel * -1  # friction to slow down movement
+            self.vel += self.acc * self.game.dt
+            # Using equation of motion
+            self.pos += self.vel * self.game.dt + (0.5 * self.acc * (self.game.dt ** 2))
+            self.hit_rect.centerx = self.pos.x
+            collided_with_wall(self, self.game.walls, 'x')
+            self.hit_rect.centery = self.pos.y
+            collided_with_wall(self, self.game.walls, 'y')
+            self.rect.center = self.hit_rect.center
+            if self.health < self.max_health:
+               self.draw_health()
 
 class Bullet(pg.sprite.Sprite):
     def __init__(self, game, pos, dir):

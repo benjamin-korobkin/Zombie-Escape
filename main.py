@@ -9,6 +9,21 @@ from settings import *
 from tilemap import *
 from sprites import *
 
+def draw_player_health(surface, x, y, health_pct):
+    if health_pct < 0:
+        health_pct = 0
+    fill = health_pct * PLAYER_HEALTH_BAR_WIDTH
+    outline_rect = pg.Rect(x, y, PLAYER_HEALTH_BAR_WIDTH, PLAYER_HEALTH_BAR_HEIGHT)
+    fill_rect = pg.Rect(x, y, fill, PLAYER_HEALTH_BAR_HEIGHT)
+    if health_pct > 0.65:
+        col = GREEN
+    elif health_pct > 0.45:
+        col = YELLOW
+    else:
+        col = RED
+    pg.draw.rect(surface, col, fill_rect)
+    pg.draw.rect(surface, WHITE, outline_rect, 2)
+
 class Game:
     def __init__(self):
         pg.init()
@@ -64,11 +79,22 @@ class Game:
 
     def update(self):
         # update portion of the game loop
+        # TODO: Give player temp invincibility when hit
         self.all_sprites.update()
         self.camera.update(self.player)
+        # mobs hit player
+        hits = pg.sprite.spritecollide(self.player, self.mobs, False, collide_hit_rect)
+        for hit in hits:
+            self.player.health -= MOB_DAMAGE
+            hit.vel = vec(0, 0)
+            if self.player.health <= 0:
+                self.playing = False
+        if hits:
+            self.player.pos += vec(MOB_KNOCKBACK, 0).rotate(-hits[0].rot)
         hits = pg.sprite.groupcollide(self.mobs, self.bullets, False, True)
         for hit in hits:
-            hit.kill()
+            hit.health -= BULLET_DAMAGE
+            hit.vel = vec(0, 0)
 
     def draw_grid(self):
         for x in range(0, WINDOW_WIDTH, TILESIZE):
@@ -81,11 +107,15 @@ class Game:
         self.screen.fill(BGCOLOR)
         # self.draw_grid()
         for sprite in self.all_sprites:
+            # if isinstance(sprite, Mob):  # I put this in the Mob.update instead
+            #    sprite.draw_health()
             self.screen.blit(sprite.image, self.camera.apply(sprite))
         # for wall in self.walls:
         #    pg.draw.rect(self.screen, WHITE, wall.rect, 2)
         # Draw player's rect. Good for debugging.   Thickness of 2
         # pg.draw.rect(self.screen, WHITE, self.player.hit_rect, 2)
+        # HUD
+        draw_player_health(self.screen, 5, 5, self.player.health / PLAYER_MAX_HEALTH)
         pg.display.flip()
 
 

@@ -26,12 +26,15 @@ GRIDHEIGHT = WINDOW_HEIGHT / TILESIZE
 WALL_IMG = 'tile_179.png'
 
 # Player settings
+PLAYER_MAX_HEALTH = 100
 PLAYER_SPEED = 250
 PLAYER_ROT_SPEED = 250  # degrees per second
 PLAYER_IMG = 'manBlue_gun.png'
 PLAYER_HIT_RECT = pg.Rect(0, 0, 35, 35)
 # By default, player facing right, so offset the bullet 30 to the right (x) and 10 down (y)
 BARREL_OFFSET = vec(30, 10)
+PLAYER_HEALTH_BAR_HEIGHT = 20
+PLAYER_HEALTH_BAR_WIDTH = 100
 
 # Gun settings
 # BULLET_IMG = 'bullet.png' # Using Surface instead.
@@ -40,8 +43,11 @@ BULLET_LIFETIME = 1250
 BULLET_RATE = 300  # How fast we can shoot bullets
 BULLET_KICKBACK = 200
 BULLET_SPREAD = 5
+BULLET_DAMAGE = 10
 
 # Mob settings
 MOB_IMG = 'zoimbie1_hold.png'
 MOB_SPEED = 150
 MOB_HIT_RECT = pg.Rect(0, 0, 30, 30)
+MOB_DAMAGE = 10
+MOB_KNOCKBACK = 25
