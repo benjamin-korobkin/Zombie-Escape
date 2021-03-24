@@ -30,7 +30,7 @@ PLAYER_MAX_HEALTH = 100
 PLAYER_SPEED = 250
 PLAYER_ROT_SPEED = 250  # degrees per second
 PLAYER_IMG = 'manBlue_gun.png'
-PLAYER_HIT_RECT = pg.Rect(0, 0, 35, 35)
+PLAYER_HIT_RECT = pg.Rect(0, 0, 35, 35)  # needs to be Rect to get center (not Surface)
 # By default, player facing right, so offset the bullet 30 to the right (x) and 10 down (y)
 BARREL_OFFSET = vec(30, 10)
 PLAYER_HEALTH_BAR_HEIGHT = 20

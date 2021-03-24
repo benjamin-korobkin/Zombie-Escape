@@ -39,15 +39,18 @@ class Player(pg.sprite.Sprite):
         # self.image = pg.Surface((TILESIZE, TILESIZE))
         # self.image.fill(YELLOW)
         self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
         self.hit_rect = PLAYER_HIT_RECT
         self.hit_rect.center = self.rect.center
+        #self.image.set_colorkey(BLACK)
         # x and y determine where the plyr will be drawn. See update()
         # self.x = x * TILESIZE
         # self.y = y * TILESIZE
         # self.vx, self.vy = 0, 0
-        self.pos = vec(x, y) * TILESIZE
+        self.pos = vec(x, y)  # * TILESIZE
         self.vel = vec(0, 0)
-        self.rot = 0  # rotation
+        self.rot = 270  # rotation
         self.last_shot = 0
         self.health = PLAYER_MAX_HEALTH
 
@@ -83,6 +86,7 @@ class Player(pg.sprite.Sprite):
         self.rot = (self.rot + self.rot_speed * self.game.dt) % 360
         # rotate the image using the above calculation
         self.image = pg.transform.rotate(self.game.player_img, self.rot)
+        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = self.pos
         self.pos += self.vel * self.game.dt
@@ -92,6 +96,8 @@ class Player(pg.sprite.Sprite):
         self.hit_rect.centery = self.pos.y
         collided_with_wall(self, self.game.walls, 'y')
         self.rect.center = self.hit_rect.center
+        #self.image.set_colorkey(BLACK)
+
 
 class Mob(pg.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -100,9 +106,11 @@ class Mob(pg.sprite.Sprite):
         self.game = game
         self.image = game.mob_img
         self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
         self.hit_rect = MOB_HIT_RECT.copy()
         self.hit_rect.center = self.rect.center
-        self.pos = vec(x, y) * TILESIZE
+        self.pos = vec(x, y)
         self.vel = vec(0, 0)
         self.acc = vec(0, 0)
         self.rect.center = self.pos
@@ -130,6 +138,7 @@ class Mob(pg.sprite.Sprite):
         else:
             self.rot = (self.game.player.pos - self.pos).angle_to(vec(1, 0))
             self.image = pg.transform.rotate(self.game.mob_img, self.rot)
+            self.image.set_colorkey(BLACK)
             self.rect = self.image.get_rect()
             self.rect.center = self.pos
             self.acc = vec(MOB_SPEED, 0).rotate(-self.rot)
@@ -151,14 +160,15 @@ class Bullet(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.image = game.bullet_img
-        self.rect = self.image.get_rect()  # TODO: Decrease bullet rect size
+        self.rect = self.image.get_rect()
+        self.hit_rect = self.rect
         self.pos = vec(pos)  # create new vector so we're not referencing the player's pos directly
         self.rect.center = self.pos
         spread = uniform(-BULLET_SPREAD, BULLET_SPREAD)
         self.vel = dir.rotate(spread) * BULLET_SPEED
         self.spawn_time = pg.time.get_ticks()
 
-        # My solution: Use a Surface instaed of the dumb image.
+        # My solution: Use a Surface instead of the dumb image.
 
     def update(self):
         self.pos += self.vel * self.game.dt
@@ -180,3 +190,13 @@ class Wall(pg.sprite.Sprite):
         self.rect.x = x * TILESIZE
         self.rect.y = y * TILESIZE
 
+class Obstacle(pg.sprite.Sprite):
+    def __init__(self, game, x, y, w, h):
+        self.groups = game.walls
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.rect = pg.Rect(x, y, w, h)
+        self.x = x
+        self.y = y
+        self.rect.x = x
+        self.rect.y = y
