@@ -10,6 +10,8 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
 
+FONT_NAME = 'arial'
+
 # game settings
 # Ensure no partial squares with these values
 WINDOW_WIDTH = 1024   # 16 * 64 or 32 * 32 or 64 * 16
@@ -47,7 +49,51 @@ BULLET_DAMAGE = 10
 
 # Mob settings
 MOB_IMG = 'zoimbie1_hold.png'
-MOB_SPEED = 150
+MOB_SPEEDS = [120, 135, 150, 165]
 MOB_HIT_RECT = pg.Rect(0, 0, 30, 30)
 MOB_DAMAGE = 10
 MOB_KNOCKBACK = 25
+MOB_AVOID_RADIUS = 70  # in px
+MOB_DETECT_RADIUS = 400
+
+# Items
+ITEM_IMAGES = {
+    "health": "health_icon.png",
+    "ammo": "bullet_icon.png",
+    "ammo_plus": "bullets_icon.png",
+    "landmine": "mine_icon.png",
+    "accuracy_up": "bullseye_icon.png"
+}
+
+# Item effectiveness
+HEALTH_PICKUP_AMT = 20
+AMMO_PICKUP_AMT = 5
+AMMO_PICKUP_PLUS_AMT = 10
+ACCURACY_PICKUP_AMT = 2
+
+
+# Effects
+MUZZLE_FLASHES = ["whitePuff15.png", "whitePuff16.png", "whitePuff17.png", "whitePuff18.png"]
+FLASH_DURATION = 40  # ms
+SPLAT_IMAGES = ['blood-splatter1.png', 'blood-splatter2.png', 'blood-splatter3.png', 'blood-splatter4.png']
+ITEM_BOB_RANGE = 4
+ITEM_BOB_SPEED = 0.15
+
+
+# Layers
+WALL_LAYER = 1
+PLAYER_LAYER = 2
+BULLET_LAYER = 3
+MOB_LAYER = 2
+EFFECTS_LAYER = 4
+ITEMS_LAYER = 1
+
+# Sounds
+BG_MUSIC = 'Disturbed-Soundscape.ogg'  # 'espionage.ogg'
+PLAYER_HIT_SOUNDS = ['pain/8.wav', 'pain/9.wav', 'pain/10.wav', 'pain/11.wav']
+ZOMBIE_MOAN_SOUNDS = ['brains2.wav', 'brains3.wav', 'zombie-roar-1.wav', 'zombie-roar-2.wav',
+                      'zombie-roar-3.wav', 'zombie-roar-5.wav', 'zombie-roar-6.wav', 'zombie-roar-7.wav']
+ZOMBIE_DEATH_SOUNDS = ['splat-15.wav']
+WEAPON_SOUNDS_GUN = ['pistol.wav']
+EFFECTS_SOUNDS = {'level_start': 'level_start.wav',
+                  'health_up': 'health_pack.wav'}

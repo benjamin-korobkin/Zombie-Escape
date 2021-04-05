@@ -1,7 +1,8 @@
 import pygame as pg
 from settings import *
 from tilemap import collide_hit_rect
-from random import uniform
+from random import uniform, choice, randint, random
+import pytweening as tween
 vec = pg.math.Vector2
 
 
@@ -32,6 +33,7 @@ def collided_with_wall(sprite, group, dir):
 
 class Player(pg.sprite.Sprite):
     def __init__(self, game, x, y):
+        self._layer = PLAYER_LAYER
         self.groups = game.all_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
@@ -53,6 +55,8 @@ class Player(pg.sprite.Sprite):
         self.rot = 270  # rotation
         self.last_shot = 0
         self.health = PLAYER_MAX_HEALTH
+        self.ammo = 0
+        self.landmines = 0
 
     def get_keys(self):
         self.rot_speed = 0
@@ -80,6 +84,9 @@ class Player(pg.sprite.Sprite):
                 pos = self.pos + BARREL_OFFSET.rotate(-self.rot)
                 Bullet(self.game, pos, dir)
                 self.vel -= vec(BULLET_KICKBACK, 0).rotate(-self.rot)
+                MuzzleFlash(self.game, pos)
+                choice(self.game.weapon_sounds['gun']).play()
+                # TODO: Change muzzle position based on player velocity
 
     def update(self):
         self.get_keys()
@@ -98,18 +105,18 @@ class Player(pg.sprite.Sprite):
         self.rect.center = self.hit_rect.center
         #self.image.set_colorkey(BLACK)
 
-
 class Mob(pg.sprite.Sprite):
     def __init__(self, game, x, y):
+        self._layer = MOB_LAYER
         self.groups = game.all_sprites, game.mobs
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        self.image = game.mob_img
-        self.rect = self.image.get_rect()
+        self.image = game.mob_img.copy()  # prevent bugs. E.g. duplicate health bars
+        self.rect = self.image.get_rect()  # TODO: fix bug likely w hit_rect where mobs disappear
         self.rect.x = x
         self.rect.y = y
         self.hit_rect = MOB_HIT_RECT.copy()
-        self.hit_rect.center = self.rect.center
+        self.hit_rect.center = self.hit_rect.center  # fixed a bug, similar to what we had earlier w plyr
         self.pos = vec(x, y)
         self.vel = vec(0, 0)
         self.acc = vec(0, 0)
@@ -117,6 +124,8 @@ class Mob(pg.sprite.Sprite):
         self.rot = 0
         self.max_health = 50
         self.health = 50
+        self.speed = choice(MOB_SPEEDS)
+        self.target = self.game.player
 
     def draw_health(self):
         hp_percent = self.health / self.max_health
@@ -132,30 +141,60 @@ class Mob(pg.sprite.Sprite):
         if self.health < self.max_health:
             pg.draw.rect(self.image, col, self.health_bar)
 
+
+    def avoid_mobs(self):
+        for mob in self.game.mobs:
+            if mob != self:
+                # calculate distance between self's vector and other mobs' vec
+                dist = self.pos - mob.pos
+                if 0 < dist.length() < MOB_AVOID_RADIUS:
+                    # normalize() returns a vector with same dir but length 1
+                    self.acc += dist.normalize()  # TODO: learn how vectors work
+
     def update(self):
         if self.health <= 0:
+            choice(self.game.zombie_death_sounds).play()
             self.kill()
+            splat_img = choice(self.game.splat_images)
+            self.game.map_img.blit(splat_img, self.pos - vec(32,32))
+            pg.display.flip()
         else:
-            self.rot = (self.game.player.pos - self.pos).angle_to(vec(1, 0))
+            target_dist = self.target.pos - self.pos
+            # Prevent bug where health bar is not drawn properly
             self.image = pg.transform.rotate(self.game.mob_img, self.rot)
             self.image.set_colorkey(BLACK)
-            self.rect = self.image.get_rect()
-            self.rect.center = self.pos
-            self.acc = vec(MOB_SPEED, 0).rotate(-self.rot)
-            self.acc += self.vel * -1  # friction to slow down movement
-            self.vel += self.acc * self.game.dt
-            # Using equation of motion
-            self.pos += self.vel * self.game.dt + (0.5 * self.acc * (self.game.dt ** 2))
-            self.hit_rect.centerx = self.pos.x
-            collided_with_wall(self, self.game.walls, 'x')
-            self.hit_rect.centery = self.pos.y
-            collided_with_wall(self, self.game.walls, 'y')
-            self.rect.center = self.hit_rect.center
+            # See note at end of method regarding this line
+            # TODO: Add condition that checks if shot was fired. Maybe add to when sound effect is played.
+            # Mob should be alerted if shot was fired near them
+            if target_dist.length_squared() < MOB_DETECT_RADIUS ** 2:
+                if random() < 0.002:
+                    choice(self.game.zombie_moan_sounds).play()
+                self.rot = (self.game.player.pos - self.pos).angle_to(vec(1, 0))
+                self.rect = self.image.get_rect()
+                self.rect.center = self.pos
+                self.acc = vec(1, 0).rotate(-self.rot)
+                self.avoid_mobs()
+                self.acc.scale_to_length(self.speed)
+                self.acc += self.vel * -1  # friction to slow down movement
+                self.vel += self.acc * self.game.dt
+                # Using equation of motion
+                self.pos += self.vel * self.game.dt + (0.5 * self.acc * (self.game.dt ** 2))
+                self.hit_rect.centerx = self.pos.x
+                collided_with_wall(self, self.game.walls, 'x')
+                self.hit_rect.centery = self.pos.y
+                collided_with_wall(self, self.game.walls, 'y')
+                self.rect.center = self.hit_rect.center
             if self.health < self.max_health:
                self.draw_health()
 
+            """Technically, the line below works. But length() of a vector is calculated with Bob's theorem.
+            This means getting the square root, which is an expensive operation. sqrt(x**2 + y**2) We save time
+            by comparing the squared values instead"""
+            # if target_dist.length() < MOB_DETECT_RADIUS:
+
 class Bullet(pg.sprite.Sprite):
     def __init__(self, game, pos, dir):
+        self._layer = BULLET_LAYER
         self.groups = game.all_sprites, game.bullets
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
@@ -167,7 +206,6 @@ class Bullet(pg.sprite.Sprite):
         spread = uniform(-BULLET_SPREAD, BULLET_SPREAD)
         self.vel = dir.rotate(spread) * BULLET_SPEED
         self.spawn_time = pg.time.get_ticks()
-
         # My solution: Use a Surface instead of the dumb image.
 
     def update(self):
@@ -178,8 +216,28 @@ class Bullet(pg.sprite.Sprite):
         if pg.time.get_ticks() - self.spawn_time > BULLET_LIFETIME:
             self.kill()
 
+class MuzzleFlash(pg.sprite.Sprite):
+    def __init__(self, game, pos):
+        self._layer = EFFECTS_LAYER
+        self.groups = game.all_sprites
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        size = randint(20, 30)
+        self.image = pg.transform.scale(choice(game.gun_flashes), (size, size))
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.hit_rect = self.rect
+        self.pos = pos
+        self.rect.center = pos
+        self.spawn_time = pg.time.get_ticks()
+
+    def update(self):
+        if pg.time.get_ticks() - self.spawn_time > FLASH_DURATION:
+            self.kill()
+
 class Wall(pg.sprite.Sprite):
     def __init__(self, game, x, y):
+        self._layer = WALL_LAYER
         self.groups = game.all_sprites, game.walls
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
@@ -192,6 +250,7 @@ class Wall(pg.sprite.Sprite):
 
 class Obstacle(pg.sprite.Sprite):
     def __init__(self, game, x, y, w, h):
+        self._layer = WALL_LAYER
         self.groups = game.walls
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
@@ -200,3 +259,28 @@ class Obstacle(pg.sprite.Sprite):
         self.y = y
         self.rect.x = x
         self.rect.y = y
+
+class Item(pg.sprite.Sprite):
+    def __init__(self, game, pos, item_type):
+        self._layer = ITEMS_LAYER
+        self.groups = game.all_sprites, game.items
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.image = pg.transform.scale(game.item_images[item_type], (32, 32))
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.type = item_type
+        self.rect.center = pos
+        self.pos = pos
+        self.animate = tween.easeInBack  # TODO: Look up function to see what included arg can do
+        self.step = 0  # Value btwn 0 and 1, used to step thru animation
+        self.dir = 1  # Will be btwn 1 and -1. E.g. To bob up and down
+
+    def update(self):
+        # Bobbing animation
+        offset = ITEM_BOB_RANGE * (self.animate(self.step / ITEM_BOB_RANGE) - 0.5)  # - 0.5 to start 'mid-animation'
+        self.rect.centery = self.pos.y + offset * self.dir
+        self.step += ITEM_BOB_SPEED
+        if self.step > ITEM_BOB_RANGE:
+            self.step = 0  # Restart/reposition
+            self.dir *= -1  # allows us to switch btwn up and down
