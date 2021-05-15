@@ -59,7 +59,7 @@ class Player(pg.sprite.Sprite):
         self.is_damaged = False
         self.weapons = ['pistol']
         self.weapon_selection = 0
-        # TODO: Consider using itertools to cycle thru weapons
+        # Consider using itertools to cycle thru weapons
         self.curr_weapon = self.weapons[self.weapon_selection]
         self.ammo = 0
         self.landmines = 0
@@ -89,16 +89,14 @@ class Player(pg.sprite.Sprite):
         if keys[pg.K_SPACE]:
             self.shoot()
 
-
     def update(self):
         self.get_keys()
         self.rot = (self.rot + self.rot_speed * self.game.dt) % 360
         # rotate the image using the above calculation
         self.image = pg.transform.rotate(self.game.player_img, self.rot)
-        #self.image.set_colorkey(BLACK)
         if self.is_damaged:
             try:
-                # cover player with red to show damage effect. Experiment w special flags if you want.
+                # Use white/transparency to show damage effect. Experiment w special flags if you want.
                 self.image.fill((255, 255, 255, next(self.damage_alpha)), special_flags=pg.BLEND_RGBA_MULT)
             except:
                 self.is_damaged = False
@@ -111,7 +109,6 @@ class Player(pg.sprite.Sprite):
         self.hit_rect.centery = self.pos.y
         collided_with_wall(self, self.game.walls, 'y')
         self.rect.center = self.hit_rect.center
-        #self.image.set_colorkey(BLACK)
 
     def shoot(self):
         now = pg.time.get_ticks()
@@ -263,7 +260,6 @@ class Bullet(pg.sprite.Sprite):
                 if target_dist.length_squared() < MOB_DETECT_RADIUS ** 2:
                     target.is_chasing = True
 
-
 class MuzzleFlash(pg.sprite.Sprite):
     def __init__(self, game, pos):
         self._layer = EFFECTS_LAYER
@@ -314,21 +310,51 @@ class Item(pg.sprite.Sprite):
         self.groups = game.all_sprites, game.items
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        self.image = pg.transform.scale(game.item_images[item_type], ratio)
-        self.image.set_colorkey(BLACK)
+        self.ogImage = pg.transform.scale(game.item_images[item_type], ratio)
+        self.ogImage.set_colorkey(BLACK)
+        self.image = self.ogImage.copy()
         self.rect = self.image.get_rect()
         self.type = item_type
         self.rect.center = pos
         self.pos = pos
-        self.animate = tween.easeInBack  # TODO: Look up function to see what included arg can do
-        self.step = 0  # Value btwn 0 and 1, used to step thru animation
-        self.dir = 1  # Will be btwn 1 and -1. E.g. To bob up and down
+        self.is_damaged = False
+        self.item_alpha = chain(ITEM_ALPHA * 4)
+        #self.animate = tween.easeInBack  # TODO: Look up function to see what included arg can do
+        #self.step = 0  # Value btwn 0 and 1, used to step thru animation
+        #self.dir = 1  # Will be btwn 1 and -1. E.g. To bob up and down
+        self.counter = ITEM_FADE_MIN
+        self.increment = 3
 
     def update(self):
+        # Fade in/out animation --> see main#draw
+        self.image = self.ogImage.copy()
+        self.counter += self.increment
+        if self.counter > ITEM_FADE_MAX or self.counter < ITEM_FADE_MIN:
+            self.increment = -self.increment
+        self.image.fill((255,255,255, min(255,self.counter)), special_flags=pg.BLEND_RGBA_MULT)
+        self.rect.center = self.pos
+
         # Bobbing animation
+"""
         offset = ITEM_BOB_RANGE * (self.animate(self.step / ITEM_BOB_RANGE) - 0.5)  # - 0.5 to start 'mid-animation'
         self.rect.centery = self.pos.y + offset * self.dir
         self.step += ITEM_BOB_SPEED
         if self.step > ITEM_BOB_RANGE:
             self.step = 0  # Restart/reposition
             self.dir *= -1  # allows us to switch btwn up and down
+"""
+
+
+class Text(pg.sprite.Sprite):
+    def __init__(self, game, x, y, text):
+        self._layer = EFFECTS_LAYER
+        self.groups = game.all_sprites
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.x = x
+        self.y = y
+        self.text = text
+        font = pg.font.Font(self.game.title_font, 24)  # font_name, size
+        self.image = font.render(text, True, BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)

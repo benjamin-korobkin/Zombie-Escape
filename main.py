@@ -10,7 +10,7 @@ from settings import *
 from tilemap import *
 from sprites import *
 
-# TODO: MAJOR FIX NEEDED FOR FILE STRUCTURING RELATED TO MAPS
+# MAJOR FIX NEEDED FOR FILE STRUCTURING RELATED TO MAPS
 # Pygame keeps complaining about not finding certain files related to our map/tiles
 # FIXED, see tilemap::render. They keep changing to black boxes when other things drawn over them. Same with blood splats
 
@@ -65,11 +65,11 @@ class Game:
         self.screen.blit(text_surface, text_rect)
 
     def load_data(self):
-        game_folder = path.dirname(__file__)  # Where our game is running from
-        img_folder = path.join(game_folder, 'img')
-        sound_folder = path.join(game_folder, 'snd')
-        music_folder = path.join(game_folder, 'music')
-        self.map_folder = path.join(game_folder, 'maps')
+        self.game_folder = path.dirname(__file__)  # Where our game is running from
+        img_folder = path.join(self.game_folder, 'img')
+        sound_folder = path.join(self.game_folder, 'snd')
+        music_folder = path.join(self.game_folder, 'music')
+        self.map_folder = path.join(self.game_folder, 'maps')
 
         self.title_font = path.join(img_folder, 'DemonSker-zyzD.ttf')  # TTF = True Type Font
         self.menu_font = path.join(img_folder, 'DemonSker-zyzD.ttf')  # TODO: Experiment
@@ -149,9 +149,11 @@ class Game:
         self.bullets = pg.sprite.Group()
         self.items = pg.sprite.Group()
         # Grab our game layout file (map)
-        self.map = TiledMap(path.join(self.map_folder, 'level1.tmx'))
+        self.map = TiledMap(path.join(self.map_folder, 'tutorial.tmx')) #'level1.tmx'
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
+        self.texts = pg.sprite.Group()  # Created sprite group of texts, and apply the camera on them
+
         # for row,tiles in enumerate(self.map.data):
         #     for col, tile in enumerate(tiles):
         #         if tile == '1':
@@ -165,16 +167,20 @@ class Game:
                              tile_object.y + tile_object.height / 2)
             if tile_object.name == 'player':
                 self.player = Player(self, obj_center.x, obj_center.y)
-            if tile_object.name == 'wall':
+            elif tile_object.name == 'wall':
                 Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
-            if tile_object.name == 'zombie':
+            elif tile_object.name == 'zombie':
                 Mob(self, obj_center.x, obj_center.y)
-            if tile_object.name in ITEM_IMAGES.keys():
+            elif tile_object.name in ITEM_IMAGES.keys():
                 if tile_object.name == 'health':
                     ratio = (32, 32)
                 elif tile_object.name == 'shotgun':
                     ratio = (32, 32)
                 Item(self, obj_center, tile_object.name, ratio)
+            elif tile_object.type == 'text':  # putting text in object name
+                #print(tile_object.name)
+                Text(self, tile_object.x, tile_object.y, tile_object.name)
+
         self.camera = Camera(self.map.width, self.map.height)
         self.draw_debug = False
         self.paused = False
@@ -204,8 +210,9 @@ class Game:
         self.all_sprites.update()
         self.camera.update(self.player)
         # Game over
-        if len(self.mobs) == 0:
-            self.playing = False
+        if len(self.mobs) == 0: # TODO: Change game over condition
+            pass
+            #self.playing = False
         # Mobs hit player
         hits = pg.sprite.spritecollide(self.player, self.mobs, False, collide_hit_rect)
         if not self.player.is_damaged and hits:
@@ -232,6 +239,7 @@ class Game:
         # Player touches item
         hits = pg.sprite.spritecollide(self.player, self.items, False)
         for hit in hits:  # TODO: Put sounds in an object instead of a dictionary
+            #hit.got_hit()  # TODO: Trying to fade items
             if hit.type == 'health' and self.player.health < PLAYER_MAX_HEALTH:
                 # self.effects_sounds['health_up'].play()  # TODO: Find different sound
                 self.player.health = min(self.player.health + HEALTH_PICKUP_AMT, PLAYER_MAX_HEALTH)
@@ -278,7 +286,8 @@ class Game:
         # HUD
         draw_health(self.screen, 5, 5, self.player.health / PLAYER_MAX_HEALTH,
                     self.player.ammo, self.player.landmines)
-        # display zombies left
+
+         # display zombies left
         self.draw_text('ZOMBIES - {}'.format(len(self.mobs)), self.hud_font, 30, WHITE,
                        WINDOW_WIDTH - 10, 10, align='ne')
         if self.paused:
@@ -340,4 +349,4 @@ g.show_start_screen()
 while True:
     g.new()
     g.run()
-    g.show_go_screen()
+    #g.show_go_screen()
