@@ -14,7 +14,7 @@ from sprites import *
 # Pygame keeps complaining about not finding certain files related to our map/tiles
 # FIXED, see tilemap::render. They keep changing to black boxes when other things drawn over them. Same with blood splats
 
-def draw_health(surface, x, y, health_pct, ammo, landmines):
+def draw_health(surface, x, y, health_pct):
     if health_pct < 0:
         health_pct = 0
     fill = health_pct * PLAYER_HEALTH_BAR_WIDTH
@@ -77,18 +77,21 @@ class Game:
         self.dim_screen = pg.Surface(self.screen.get_size()).convert_alpha()
         self.dim_screen.fill((0, 0, 0, 180))  # BLACK with 180 transparency
         self.player_img = pg.image.load(path.join(img_folder, PLAYER_IMG)).convert_alpha()  # Surface
-        # self.player_img.set_colorkey(BLACK)  # Doesn't work
         self.wall_img = pg.image.load(path.join(img_folder, WALL_IMG)).convert_alpha()  # Surface
         self.wall_img = pg.transform.scale(self.wall_img, (TILESIZE, TILESIZE))  # can scale image
         self.mob_img = pg.image.load(path.join(img_folder, MOB_IMG)).convert_alpha()  # Surface
         # pg.draw.circle(surface, color, center, radius)  # Each image is a Surface
+        self.gun_images = {}
+        for gun in GUN_IMAGES:
+            gun_img = (pg.image.load(path.join(img_folder, GUN_IMAGES[gun])).convert_alpha())
+            gun_img = pg.transform.scale(gun_img, (32, 32))
+            self.gun_images[gun] = gun_img
+
         self.bullet_images = {}
         self.pistol_bullet_img = pg.Surface((7, 7))
         self.bullet_images['pistol'] = self.pistol_bullet_img
         self.shotgun_bullet_img = pg.Surface((3, 3))
         self.bullet_images['shotgun'] = self.shotgun_bullet_img
-            #pg.draw.circle(self.screen, BLACK, (0, 0), 5)  # pg.image.load(path.join(img_folder,
-        # BULLET_IMG)).convert_alpha()
         self.gun_flashes = []
         for img in MUZZLE_FLASHES:
             self.gun_flashes.append(pg.image.load(path.join(img_folder, img)).convert_alpha())
@@ -176,6 +179,8 @@ class Game:
                     ratio = (32, 32)
                 elif tile_object.name == 'shotgun':
                     ratio = (32, 32)
+                elif tile_object.name == 'ammo':
+                    ratio = (32, 32)
                 Item(self, obj_center, tile_object.name, ratio)
             elif tile_object.type == 'text':  # putting text in object name
                 #print(tile_object.name)
@@ -239,7 +244,6 @@ class Game:
         # Player touches item
         hits = pg.sprite.spritecollide(self.player, self.items, False)
         for hit in hits:  # TODO: Put sounds in an object instead of a dictionary
-            #hit.got_hit()  # TODO: Trying to fade items
             if hit.type == 'health' and self.player.health < PLAYER_MAX_HEALTH:
                 # self.effects_sounds['health_up'].play()  # TODO: Find different sound
                 self.player.health = min(self.player.health + HEALTH_PICKUP_AMT, PLAYER_MAX_HEALTH)
@@ -248,6 +252,16 @@ class Game:
                 hit.kill()
                 self.effects_sounds['gun_pickup'].play()
                 self.player.weapons.append('shotgun')
+            elif hit.type == 'ammo':
+                hit.kill()
+                self.player.ammo += 6
+                # TODO, get sound: self.effects_sounds['ammo_pickup'].play()
+            elif hit.type == 'ammo_plus':
+                hit.kill()
+                self.player.ammo += 15
+            elif hit.type == 'landmine':
+                hit.kill()
+                self.player.landmines += 1
 
     def draw_grid(self):
         for x in range(0, WINDOW_WIDTH, TILESIZE):
@@ -284,12 +298,17 @@ class Game:
         if self.is_night:
             self.render_fog()
         # HUD
-        draw_health(self.screen, 5, 5, self.player.health / PLAYER_MAX_HEALTH,
-                    self.player.ammo, self.player.landmines)
+        draw_health(self.screen, 5, 5, self.player.health / PLAYER_MAX_HEALTH)
+
+        # Display current weapon
+        self.screen.blit(self.gun_images[self.player.curr_weapon], (10, 25))
+        # Display current ammo
+        self.draw_text(' - {}'.format((self.player.ammo)), self.hud_font, 30, BLACK, 45, 30, align='nw')
 
          # display zombies left
         self.draw_text('ZOMBIES - {}'.format(len(self.mobs)), self.hud_font, 30, WHITE,
                        WINDOW_WIDTH - 10, 10, align='ne')
+
         if self.paused:
             self.screen.blit(self.dim_screen, (0, 0))  # top left of rect position
             self.draw_text("PAUSED", self.title_font, 128, RED, WINDOW_WIDTH / 2,

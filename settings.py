@@ -80,6 +80,12 @@ ITEM_IMAGES = {
     "ammo_plus": "bullets_icon.png",
     "landmine": "mine_icon.png",
     "accuracy_up": "bullseye_icon.png",
+    "shotgun": "obj_shotgun.png",
+    "pistol": "obj_pistol.png"
+}
+
+GUN_IMAGES = {
+    "pistol": "obj_pistol.png",
     "shotgun": "obj_shotgun.png"
 }
 

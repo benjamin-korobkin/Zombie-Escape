@@ -113,7 +113,8 @@ class Player(pg.sprite.Sprite):
     def shoot(self):
         now = pg.time.get_ticks()
         curr_weapon = WEAPONS[self.curr_weapon]
-        if now - self.last_shot > curr_weapon['fire_rate']:
+        bullet_usage = curr_weapon['bullet_count']
+        if self.ammo >= bullet_usage and now - self.last_shot > curr_weapon['fire_rate']:  # TODO: else play empty gun sound
             self.last_shot = now
             dir = vec(1, 0).rotate(-self.rot)
             pos = self.pos + BARREL_OFFSET.rotate(-self.rot)
@@ -124,7 +125,8 @@ class Player(pg.sprite.Sprite):
             #    snd.stop()
             snd.play()
             MuzzleFlash(self.game, pos)
-            for i in range(curr_weapon['bullet_count']):
+            self.ammo -= bullet_usage
+            for i in range(bullet_usage):
                 spread = uniform(-curr_weapon['bullet_spread'], curr_weapon['bullet_spread'])
                 Bullet(self.game, pos, dir.rotate(spread), curr_weapon['damage'])
 
@@ -193,7 +195,6 @@ class Mob(pg.sprite.Sprite):
             target_dist = self.target.pos - self.pos
             # Prevent bug where health bar is not drawn properly
             self.image = pg.transform.rotate(self.game.mob_img, self.rot)
-            #self.image.set_colorkey(BLACK)
             # See note at end of method regarding this line
             # TODO: Mob should be alerted if shot was fired near them
             if not self.is_chasing and target_dist.length_squared() < MOB_DETECT_RADIUS ** 2:
