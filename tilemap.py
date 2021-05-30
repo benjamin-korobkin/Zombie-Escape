@@ -26,7 +26,6 @@ class TiledMap:
         self.height = tm.height * tm.tileheight
         self.tmxdata = tm
 
-
     def render(self, surface):
         # get tile image by id used in the tmx file
         ti = self.tmxdata.get_tile_image_by_gid
@@ -35,6 +34,7 @@ class TiledMap:
                 for x, y, gid in layer:
                     tile = ti(gid)
                     if tile:  # if it's a tile
+                        tile.set_colorkey(BLACK) # GAMECHANGER!!!!!
                         surface.blit(tile, (x * self.tmxdata.tilewidth, y * self.tmxdata.tileheight))
 
     def make_map(self):

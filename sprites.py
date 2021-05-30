@@ -3,6 +3,7 @@ from settings import *
 from tilemap import collide_hit_rect
 from random import uniform, choice, randint, random
 import pytweening as tween
+from itertools import chain
 vec = pg.math.Vector2
 
 
@@ -55,8 +56,19 @@ class Player(pg.sprite.Sprite):
         self.rot = 270  # rotation
         self.last_shot = 0
         self.health = PLAYER_MAX_HEALTH
-        self.ammo = 0
+        self.is_damaged = False
+        self.weapons = ['pistol']
+        self.weapon_selection = 0
+        # Consider using itertools to cycle thru weapons
+        self.curr_weapon = self.weapons[self.weapon_selection]
+        self.pistol_ammo = 0
+        self.shotgun_ammo = 0
+        self.uzi_ammo = 0
         self.landmines = 0
+
+    def got_hit(self):
+        self.is_damaged = True
+        self.damage_alpha = chain(DAMAGE_ALPHA * 4)
 
     def get_keys(self):
         self.rot_speed = 0
@@ -77,23 +89,19 @@ class Player(pg.sprite.Sprite):
         if keys[pg.K_DOWN] or keys[pg.K_s]:
             self.vel = vec(-PLAYER_SPEED/2, 0).rotate(-self.rot)
         if keys[pg.K_SPACE]:
-            now = pg.time.get_ticks()
-            if now - self.last_shot > BULLET_RATE:
-                self.last_shot = now
-                dir = vec(1, 0).rotate(-self.rot)
-                pos = self.pos + BARREL_OFFSET.rotate(-self.rot)
-                Bullet(self.game, pos, dir)
-                self.vel -= vec(BULLET_KICKBACK, 0).rotate(-self.rot)
-                MuzzleFlash(self.game, pos)
-                choice(self.game.weapon_sounds['gun']).play()
-                # TODO: Change muzzle position based on player velocity
+            self.shoot()
 
     def update(self):
         self.get_keys()
         self.rot = (self.rot + self.rot_speed * self.game.dt) % 360
         # rotate the image using the above calculation
         self.image = pg.transform.rotate(self.game.player_img, self.rot)
-        self.image.set_colorkey(BLACK)
+        if self.is_damaged:
+            try:
+                # Use white/transparency to show damage effect. Experiment w special flags if you want.
+                self.image.fill((255, 255, 255, next(self.damage_alpha)), special_flags=pg.BLEND_RGBA_MULT)
+            except:
+                self.is_damaged = False
         self.rect = self.image.get_rect()
         self.rect.center = self.pos
         self.pos += self.vel * self.game.dt
@@ -103,7 +111,52 @@ class Player(pg.sprite.Sprite):
         self.hit_rect.centery = self.pos.y
         collided_with_wall(self, self.game.walls, 'y')
         self.rect.center = self.hit_rect.center
-        #self.image.set_colorkey(BLACK)
+
+    def shoot(self):
+        now = pg.time.get_ticks()
+        curr_weapon = WEAPONS[self.curr_weapon]
+        bullet_usage = curr_weapon['bullet_count']
+        curr_ammo = self.get_ammo(curr_weapon)
+        if curr_ammo >= bullet_usage and now - self.last_shot > curr_weapon['fire_rate']:  # TODO: else play empty gun sound
+            self.last_shot = now
+            dir = vec(1, 0).rotate(-self.rot)
+            pos = self.pos + BARREL_OFFSET.rotate(-self.rot)
+            self.vel -= vec(curr_weapon['kickback'], 0).rotate(-self.rot)
+            snd = choice(self.game.weapon_sounds[self.curr_weapon])
+            # Interesting code to synchronize sounds, but won't be using it.
+            #if snd.get_num_channels() > 2:
+            #    snd.stop()
+            snd.play()
+            MuzzleFlash(self.game, pos)
+            self.reduce_ammo(curr_weapon)
+            for i in range(bullet_usage):
+                spread = uniform(-curr_weapon['bullet_spread'], curr_weapon['bullet_spread'])
+                Bullet(self.game, pos, dir.rotate(spread), curr_weapon['damage'])
+
+    def change_weapon(self):
+        self.weapon_selection += 1
+        if self.weapon_selection >= len(self.weapons):
+            self.weapon_selection = 0
+        self.curr_weapon = self.weapons[self.weapon_selection]
+        # print("switched to ", self.curr_weapon) # TODO: display weapon name
+
+    def get_ammo(self, weapon):
+        curr_weapon = self.curr_weapon
+        if curr_weapon == 'pistol':
+            return self.pistol_ammo
+        elif curr_weapon == 'shotgun':
+            return self.shotgun_ammo
+        elif curr_weapon == 'uzi':
+            return self.uzi_ammo
+
+    def reduce_ammo(self, weapon):
+        curr_weapon = self.curr_weapon
+        if curr_weapon == 'pistol':
+            self.pistol_ammo -= 1
+        elif curr_weapon == 'shotgun':
+            self.shotgun_ammo -= 2
+        elif curr_weapon == 'uzi':
+            self.uzi_ammo -= 1
 
 class Mob(pg.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -112,7 +165,7 @@ class Mob(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.image = game.mob_img.copy()  # prevent bugs. E.g. duplicate health bars
-        self.rect = self.image.get_rect()  # TODO: fix bug likely w hit_rect where mobs disappear
+        self.rect = self.image.get_rect()  # fixed bug by using mob_hit_rect.copy() where mobs disappear
         self.rect.x = x
         self.rect.y = y
         self.hit_rect = MOB_HIT_RECT.copy()
@@ -126,6 +179,7 @@ class Mob(pg.sprite.Sprite):
         self.health = 50
         self.speed = choice(MOB_SPEEDS)
         self.target = self.game.player
+        self.is_chasing = False
 
     def draw_health(self):
         hp_percent = self.health / self.max_health
@@ -162,11 +216,12 @@ class Mob(pg.sprite.Sprite):
             target_dist = self.target.pos - self.pos
             # Prevent bug where health bar is not drawn properly
             self.image = pg.transform.rotate(self.game.mob_img, self.rot)
-            self.image.set_colorkey(BLACK)
             # See note at end of method regarding this line
-            # TODO: Add condition that checks if shot was fired. Maybe add to when sound effect is played.
-            # Mob should be alerted if shot was fired near them
-            if target_dist.length_squared() < MOB_DETECT_RADIUS ** 2:
+            # alert mob if shot was fired near it
+            if not self.is_chasing and target_dist.length_squared() < MOB_DETECT_RADIUS ** 2:
+                self.is_chasing = True
+
+            if self.is_chasing:
                 if random() < 0.002:
                     choice(self.game.zombie_moan_sounds).play()
                 self.rot = (self.game.player.pos - self.pos).angle_to(vec(1, 0))
@@ -193,28 +248,39 @@ class Mob(pg.sprite.Sprite):
             # if target_dist.length() < MOB_DETECT_RADIUS:
 
 class Bullet(pg.sprite.Sprite):
-    def __init__(self, game, pos, dir):
+    def __init__(self, game, pos, dir, damage):
         self._layer = BULLET_LAYER
         self.groups = game.all_sprites, game.bullets
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        self.image = game.bullet_img
+        self.weapon = WEAPONS[game.player.curr_weapon]
+        self.image = game.bullet_images[game.player.curr_weapon]  # game.pistol_bullet_img
         self.rect = self.image.get_rect()
         self.hit_rect = self.rect
         self.pos = vec(pos)  # create new vector so we're not referencing the player's pos directly
         self.rect.center = self.pos
-        spread = uniform(-BULLET_SPREAD, BULLET_SPREAD)
-        self.vel = dir.rotate(spread) * BULLET_SPEED
+        # spread = uniform(-BULLET_SPREAD, BULLET_SPREAD)
+        self.vel = dir * self.weapon['bullet_speed'] * uniform(0.9, 1.1)
         self.spawn_time = pg.time.get_ticks()
-        # My solution: Use a Surface instead of the dumb image.
+        self.targets = self.game.mobs
+        self.damage = damage
+        # My solution: Use a Surface instead of the difficult image.
 
     def update(self):
         self.pos += self.vel * self.game.dt
         self.rect.center = self.pos
         if pg.sprite.spritecollideany(self, self.game.walls):
             self.kill()
-        if pg.time.get_ticks() - self.spawn_time > BULLET_LIFETIME:
+        if pg.time.get_ticks() - self.spawn_time > WEAPONS[self.game.player.curr_weapon]['bullet_lifetime']:
             self.kill()
+        self.alert_mobs()
+
+    def alert_mobs(self):
+        for target in self.targets:
+            if not target.is_chasing:
+                target_dist = target.pos - self.pos
+                if target_dist.length_squared() < MOB_DETECT_RADIUS ** 2:
+                    target.is_chasing = True
 
 class MuzzleFlash(pg.sprite.Sprite):
     def __init__(self, game, pos):
@@ -224,7 +290,7 @@ class MuzzleFlash(pg.sprite.Sprite):
         self.game = game
         size = randint(20, 30)
         self.image = pg.transform.scale(choice(game.gun_flashes), (size, size))
-        self.image.set_colorkey(BLACK)
+        #self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.hit_rect = self.rect
         self.pos = pos
@@ -261,26 +327,71 @@ class Obstacle(pg.sprite.Sprite):
         self.rect.y = y
 
 class Item(pg.sprite.Sprite):
-    def __init__(self, game, pos, item_type):
+    def __init__(self, game, pos, item_type, ratio):
         self._layer = ITEMS_LAYER
         self.groups = game.all_sprites, game.items
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        self.image = pg.transform.scale(game.item_images[item_type], (32, 32))
-        self.image.set_colorkey(BLACK)
+        self.ogImage = pg.transform.scale(game.item_images[item_type], ratio)
+        if not item_type in GUN_IMAGES:
+            self.ogImage.set_colorkey(BLACK)
+        self.image = self.ogImage.copy()
         self.rect = self.image.get_rect()
         self.type = item_type
         self.rect.center = pos
         self.pos = pos
+        self.item_alpha = chain(ITEM_ALPHA * 4)
+        self.counter = ITEM_FADE_MIN
+        self.increment = 3
+
+    def update(self):
+        # Fade in/out animation --> see main#draw
+        self.image = self.ogImage.copy()
+        self.counter += self.increment
+        if self.counter > ITEM_FADE_MAX or self.counter < ITEM_FADE_MIN:
+            self.increment = -self.increment
+        self.image.fill((255,255,255, min(255,self.counter)), special_flags=pg.BLEND_RGBA_MULT)
+        self.rect.center = self.pos
+
+class BonusItem(Item):
+    def __init__(self, game, pos, axis, ratio):
+        self._layer = ITEMS_LAYER
+        self.groups = game.all_sprites, game.items
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.image = pg.transform.scale(game.item_images['bonus'], ratio)
+        # self.image = self.ogImage.copy()
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = pos
+        self.pos = pos
         self.animate = tween.easeInBack  # TODO: Look up function to see what included arg can do
         self.step = 0  # Value btwn 0 and 1, used to step thru animation
-        self.dir = 1  # Will be btwn 1 and -1. E.g. To bob up and down
+        self.dir = 1  # Will be btwn 1 and -1. E.g. To bob up and down / side to side
+        self.type = axis
 
     def update(self):
         # Bobbing animation
         offset = ITEM_BOB_RANGE * (self.animate(self.step / ITEM_BOB_RANGE) - 0.5)  # - 0.5 to start 'mid-animation'
-        self.rect.centery = self.pos.y + offset * self.dir
+        if self.type == 'y':
+            self.rect.centery = self.pos.y + offset * self.dir
+        else:
+            self.rect.centerx = self.pos.x + offset * self.dir
         self.step += ITEM_BOB_SPEED
         if self.step > ITEM_BOB_RANGE:
             self.step = 0  # Restart/reposition
             self.dir *= -1  # allows us to switch btwn up and down
+
+class Text(pg.sprite.Sprite):
+    def __init__(self, game, x, y, text):
+        self._layer = EFFECTS_LAYER
+        self.groups = game.all_sprites
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.x = x
+        self.y = y
+        self.text = text
+        font = pg.font.Font(self.game.title_font, 24)  # font_name, size
+        self.image = font.render(text, True, BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
