@@ -61,7 +61,9 @@ class Player(pg.sprite.Sprite):
         self.weapon_selection = 0
         # Consider using itertools to cycle thru weapons
         self.curr_weapon = self.weapons[self.weapon_selection]
-        self.ammo = 0
+        self.pistol_ammo = 0
+        self.shotgun_ammo = 0
+        self.uzi_ammo = 0
         self.landmines = 0
 
     def got_hit(self):
@@ -114,7 +116,8 @@ class Player(pg.sprite.Sprite):
         now = pg.time.get_ticks()
         curr_weapon = WEAPONS[self.curr_weapon]
         bullet_usage = curr_weapon['bullet_count']
-        if self.ammo >= bullet_usage and now - self.last_shot > curr_weapon['fire_rate']:  # TODO: else play empty gun sound
+        curr_ammo = self.get_ammo(curr_weapon)
+        if curr_ammo >= bullet_usage and now - self.last_shot > curr_weapon['fire_rate']:  # TODO: else play empty gun sound
             self.last_shot = now
             dir = vec(1, 0).rotate(-self.rot)
             pos = self.pos + BARREL_OFFSET.rotate(-self.rot)
@@ -125,7 +128,7 @@ class Player(pg.sprite.Sprite):
             #    snd.stop()
             snd.play()
             MuzzleFlash(self.game, pos)
-            self.ammo -= bullet_usage
+            self.reduce_ammo(curr_weapon)
             for i in range(bullet_usage):
                 spread = uniform(-curr_weapon['bullet_spread'], curr_weapon['bullet_spread'])
                 Bullet(self.game, pos, dir.rotate(spread), curr_weapon['damage'])
@@ -136,6 +139,24 @@ class Player(pg.sprite.Sprite):
             self.weapon_selection = 0
         self.curr_weapon = self.weapons[self.weapon_selection]
         # print("switched to ", self.curr_weapon) # TODO: display weapon name
+
+    def get_ammo(self, weapon):
+        curr_weapon = self.curr_weapon
+        if curr_weapon == 'pistol':
+            return self.pistol_ammo
+        elif curr_weapon == 'shotgun':
+            return self.shotgun_ammo
+        elif curr_weapon == 'uzi':
+            return self.uzi_ammo
+
+    def reduce_ammo(self, weapon):
+        curr_weapon = self.curr_weapon
+        if curr_weapon == 'pistol':
+            self.pistol_ammo -= 1
+        elif curr_weapon == 'shotgun':
+            self.shotgun_ammo -= 2
+        elif curr_weapon == 'uzi':
+            self.uzi_ammo -= 1
 
 class Mob(pg.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -196,7 +217,7 @@ class Mob(pg.sprite.Sprite):
             # Prevent bug where health bar is not drawn properly
             self.image = pg.transform.rotate(self.game.mob_img, self.rot)
             # See note at end of method regarding this line
-            # TODO: Mob should be alerted if shot was fired near them
+            # alert mob if shot was fired near it
             if not self.is_chasing and target_dist.length_squared() < MOB_DETECT_RADIUS ** 2:
                 self.is_chasing = True
 
@@ -312,17 +333,14 @@ class Item(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.ogImage = pg.transform.scale(game.item_images[item_type], ratio)
-        self.ogImage.set_colorkey(BLACK)
+        if not item_type in GUN_IMAGES:
+            self.ogImage.set_colorkey(BLACK)
         self.image = self.ogImage.copy()
         self.rect = self.image.get_rect()
         self.type = item_type
         self.rect.center = pos
         self.pos = pos
-        self.is_damaged = False
         self.item_alpha = chain(ITEM_ALPHA * 4)
-        #self.animate = tween.easeInBack  # TODO: Look up function to see what included arg can do
-        #self.step = 0  # Value btwn 0 and 1, used to step thru animation
-        #self.dir = 1  # Will be btwn 1 and -1. E.g. To bob up and down
         self.counter = ITEM_FADE_MIN
         self.increment = 3
 
@@ -335,16 +353,34 @@ class Item(pg.sprite.Sprite):
         self.image.fill((255,255,255, min(255,self.counter)), special_flags=pg.BLEND_RGBA_MULT)
         self.rect.center = self.pos
 
+class BonusItem(Item):
+    def __init__(self, game, pos, axis, ratio):
+        self._layer = ITEMS_LAYER
+        self.groups = game.all_sprites, game.items
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.image = pg.transform.scale(game.item_images['bonus'], ratio)
+        # self.image = self.ogImage.copy()
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = pos
+        self.pos = pos
+        self.animate = tween.easeInBack  # TODO: Look up function to see what included arg can do
+        self.step = 0  # Value btwn 0 and 1, used to step thru animation
+        self.dir = 1  # Will be btwn 1 and -1. E.g. To bob up and down / side to side
+        self.type = axis
+
+    def update(self):
         # Bobbing animation
-"""
         offset = ITEM_BOB_RANGE * (self.animate(self.step / ITEM_BOB_RANGE) - 0.5)  # - 0.5 to start 'mid-animation'
-        self.rect.centery = self.pos.y + offset * self.dir
+        if self.type == 'y':
+            self.rect.centery = self.pos.y + offset * self.dir
+        else:
+            self.rect.centerx = self.pos.x + offset * self.dir
         self.step += ITEM_BOB_SPEED
         if self.step > ITEM_BOB_RANGE:
             self.step = 0  # Restart/reposition
             self.dir *= -1  # allows us to switch btwn up and down
-"""
-
 
 class Text(pg.sprite.Sprite):
     def __init__(self, game, x, y, text):

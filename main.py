@@ -3,6 +3,8 @@
 # Video link: https://youtu.be/3UxnelT9aCo
 # Credit to Kenney for Game Art
 # Credit to Eric Matyas for Music
+# Weapon icons from Flaticon (attribution required)
+# (Credit creator of icons.svg, opengameart)
 import pygame as pg
 import sys
 from os import path
@@ -92,6 +94,8 @@ class Game:
         self.bullet_images['pistol'] = self.pistol_bullet_img
         self.shotgun_bullet_img = pg.Surface((3, 3))
         self.bullet_images['shotgun'] = self.shotgun_bullet_img
+        self.uzi_bullet_img = pg.Surface((4, 4))
+        self.bullet_images['uzi'] = self.uzi_bullet_img
         self.gun_flashes = []
         for img in MUZZLE_FLASHES:
             self.gun_flashes.append(pg.image.load(path.join(img_folder, img)).convert_alpha())
@@ -151,6 +155,7 @@ class Game:
         self.mobs = pg.sprite.Group()
         self.bullets = pg.sprite.Group()
         self.items = pg.sprite.Group()
+
         # Grab our game layout file (map)
         self.map = TiledMap(path.join(self.map_folder, 'tutorial.tmx')) #'level1.tmx'
         self.map_img = self.map.make_map()
@@ -173,13 +178,23 @@ class Game:
             elif tile_object.name == 'wall':
                 Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             elif tile_object.name == 'zombie':
-                Mob(self, obj_center.x, obj_center.y)
+                pass#Mob(self, obj_center.x, obj_center.y)
             elif tile_object.name in ITEM_IMAGES.keys():
-                if tile_object.name == 'health':
+                if tile_object.name == 'bonus':
                     ratio = (32, 32)
-                elif tile_object.name == 'shotgun':
+                    if tile_object.type == 'x':
+                        BonusItem(self, obj_center, 'x', ratio)
+                    else:
+                        BonusItem(self, obj_center, 'y', ratio)
+                    continue
+                elif tile_object.name == 'health':
                     ratio = (32, 32)
-                elif tile_object.name == 'ammo':
+                elif tile_object.name == 'comms':
+                    ratio = (48, 48)
+                elif tile_object.name in GUN_IMAGES:
+                    ratio = (48, 48)
+                elif tile_object.name == 'pistol_ammo' or tile_object.name == 'shotgun_ammo' \
+                        or tile_object.name == 'uzi_ammo':
                     ratio = (32, 32)
                 Item(self, obj_center, tile_object.name, ratio)
             elif tile_object.type == 'text':  # putting text in object name
@@ -252,16 +267,35 @@ class Game:
                 hit.kill()
                 self.effects_sounds['gun_pickup'].play()
                 self.player.weapons.append('shotgun')
-            elif hit.type == 'ammo':
+                self.player.weapon_selection += 1
+                self.player.curr_weapon = 'shotgun'
+                self.player.shotgun_ammo += SHOTGUN_AMMO_PICKUP_AMT
+            elif hit.type == 'uzi':
                 hit.kill()
-                self.player.ammo += 6
+                self.effects_sounds['gun_pickup'].play()
+                self.player.weapons.append('uzi')
+                self.player.weapon_selection += 1
+                self.player.curr_weapon = 'uzi'
+                self.player.uzi_ammo += UZI_AMMO_PICKUP_AMT
+            elif hit.type == 'pistol_ammo':
+                hit.kill()
+                self.player.pistol_ammo += PISTOL_AMMO_PICKUP_AMT
                 # TODO, get sound: self.effects_sounds['ammo_pickup'].play()
-            elif hit.type == 'ammo_plus':
+            elif hit.type == 'shotgun_ammo':
                 hit.kill()
-                self.player.ammo += 15
+                self.player.shotgun_ammo += SHOTGUN_AMMO_PICKUP_AMT
+            elif hit.type == 'uzi_ammo':
+                hit.kill()
+                self.player.uzi_ammo += UZI_AMMO_PICKUP_AMT
             elif hit.type == 'landmine':
                 hit.kill()
                 self.player.landmines += 1
+
+        # Bullet touches BonusItem
+        hits = pg.sprite.groupcollide(self.items, self.bullets, False, True)
+        for hit in hits:
+            if hit.type == 'bonus':
+                hit.kill()
 
     def draw_grid(self):
         for x in range(0, WINDOW_WIDTH, TILESIZE):
@@ -297,13 +331,13 @@ class Game:
         # pg.draw.rect(self.screen, WHITE, self.player.hit_rect, 2)
         if self.is_night:
             self.render_fog()
-        # HUD
         draw_health(self.screen, 5, 5, self.player.health / PLAYER_MAX_HEALTH)
 
         # Display current weapon
         self.screen.blit(self.gun_images[self.player.curr_weapon], (10, 25))
         # Display current ammo
-        self.draw_text(' - {}'.format((self.player.ammo)), self.hud_font, 30, BLACK, 45, 30, align='nw')
+        curr_weapon_ammo_amt = self.player.get_ammo(self.player.curr_weapon)
+        self.draw_text(' - {}'.format((curr_weapon_ammo_amt)), self.hud_font, 30, BLACK, 45, 30, align='nw')
 
          # display zombies left
         self.draw_text('ZOMBIES - {}'.format(len(self.mobs)), self.hud_font, 30, WHITE,

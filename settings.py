@@ -29,7 +29,7 @@ WALL_IMG = 'tile_179.png'
 
 # Player settings
 PLAYER_MAX_HEALTH = 100
-PLAYER_SPEED = 250  # TODO: Reduce in final game
+PLAYER_SPEED = 500  # TODO: Reduce in final game
 PLAYER_ROT_SPEED = 250  # degrees per second
 PLAYER_IMG = 'manBlue_gun.png'
 PLAYER_HIT_RECT = pg.Rect(0, 0, 35, 35)  # needs to be Rect to get center (not Surface)
@@ -40,7 +40,7 @@ PLAYER_HEALTH_BAR_WIDTH = 100
 
 # Weapon settings
 # BULLET_IMG = 'bullet.png' # Using Surface instead.
-# TODO: Create a Weapon class instead of dictionaries in our settings file
+# MAYBE: Create a Weapon class instead of dictionaries in our settings file
 WEAPONS = {}
 WEAPONS['pistol'] = {
     'bullet_speed': 750,
@@ -49,7 +49,8 @@ WEAPONS['pistol'] = {
     'kickback': 200,
     'bullet_spread': 5,
     'damage': 10,
-    'bullet_count': 1
+    'bullet_count': 1,
+    'bullet_usage': 1
 
 }
 WEAPONS['shotgun'] = {
@@ -59,7 +60,18 @@ WEAPONS['shotgun'] = {
     'kickback': 500,
     'bullet_spread': 20,
     'damage': 5,
-    'bullet_count': 5
+    'bullet_count': 5,
+    'bullet_usage': 2
+}
+WEAPONS['uzi'] = {
+    'bullet_speed': 1000,
+    'bullet_lifetime': 750,
+    'fire_rate': 100,
+    'kickback': 300,
+    'bullet_spread': 15,
+    'damage': 4,
+    'bullet_count': 1,
+    'bullet_usage': 1
 }
 # 'bullet_size': 'lg'
 # 'bullet_size': 'sm'
@@ -76,32 +88,37 @@ MOB_DETECT_RADIUS = 400
 # Items
 ITEM_IMAGES = {
     "health": "health_icon.png",
-    "ammo": "bullet_icon.png",
-    "ammo_plus": "bullets_icon.png",
+    "pistol_ammo": "pistol_ammo.png",
+    "shotgun_ammo": "shotgun_ammo.png",
+    "uzi_ammo": "uzi_ammo.png",
     "landmine": "mine_icon.png",
-    "accuracy_up": "bullseye_icon.png",
-    "shotgun": "obj_shotgun.png",
-    "pistol": "obj_pistol.png"
+    "bonus": "bonus.png",
+    "comms": "comms_icon.png",
+    "shotgun": "shotgun.png",
+    "pistol": "pistol.png",
+    "uzi": "uzi.png"
 }
 
 GUN_IMAGES = {
-    "pistol": "obj_pistol.png",
-    "shotgun": "obj_shotgun.png"
+    "pistol": "pistol.png",
+    "shotgun": "shotgun.png",
+    "uzi": "uzi.png"
 }
 
 # Item effectiveness
 HEALTH_PICKUP_AMT = 20
-AMMO_PICKUP_AMT = 5
-AMMO_PICKUP_PLUS_AMT = 10
-ACCURACY_PICKUP_AMT = 2
-
+PISTOL_AMMO_PICKUP_AMT = 5
+SHOTGUN_AMMO_PICKUP_AMT = 10
+UZI_AMMO_PICKUP_AMT = 12
 
 # Effects
 MUZZLE_FLASHES = ["whitePuff15.png", "whitePuff16.png", "whitePuff17.png", "whitePuff18.png"]
 FLASH_DURATION = 40  # ms
 SPLAT_IMAGES = ['blood-splatter1.png', 'blood-splatter2.png', 'blood-splatter3.png', 'blood-splatter4.png']
-ITEM_BOB_RANGE = 5
-ITEM_BOB_SPEED = 0.13
+
+ITEM_BOB_RANGE = 50
+ITEM_BOB_SPEED = 1
+
 DAMAGE_ALPHA = [i for i in range(0, 255, 20)]
 ITEM_ALPHA = [i for i in range(0, 255, 2)]
 ITEM_FADE_MIN = 50
@@ -126,7 +143,8 @@ ZOMBIE_MOAN_SOUNDS = ['brains2.wav', 'brains3.wav', 'zombie-roar-1.wav', 'zombie
 ZOMBIE_DEATH_SOUNDS = ['splat-15.wav']
 WEAPON_SOUNDS = {
     'pistol': ['pistol.wav'],
-    'shotgun': ['shotgun.wav']
+    'shotgun': ['shotgun.wav'],
+    'uzi': ['pistol.wav']  # TODO
 }
 EFFECTS_SOUNDS = {
     'level_start': 'level_start.wav',
