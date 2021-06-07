@@ -5,6 +5,7 @@
 # Credit to Eric Matyas for Music
 # Weapon icons from Flaticon (attribution required)
 # (Credit creator of icons.svg, opengameart)
+# landmine by Icons8
 import pygame as pg
 import sys
 from os import path
@@ -72,6 +73,7 @@ class Game:
         sound_folder = path.join(self.game_folder, 'snd')
         music_folder = path.join(self.game_folder, 'music')
         self.map_folder = path.join(self.game_folder, 'maps')
+        self.explosion_sheet = pg.image.load(path.join(img_folder, 'explosion.png')).convert_alpha()
 
         self.title_font = path.join(img_folder, 'DemonSker-zyzD.ttf')  # TTF = True Type Font
         self.menu_font = path.join(img_folder, 'DemonSker-zyzD.ttf')  # TODO: Experiment
@@ -152,16 +154,20 @@ class Game:
         # initialize all variables and do all the setup for a new game
         self.all_sprites = pg.sprite.LayeredUpdates()  #Group()
         self.walls = pg.sprite.Group()
+        self.bases = pg.sprite.Group()
         self.mobs = pg.sprite.Group()
         self.bullets = pg.sprite.Group()
         self.items = pg.sprite.Group()
+        self.landmines = pg.sprite.Group()
+        self.explosions = pg.sprite.Group()
 
         # Grab our game layout file (map)
         self.map = TiledMap(path.join(self.map_folder, 'tutorial.tmx')) #'level1.tmx'
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
         self.texts = pg.sprite.Group()  # Created sprite group of texts, and apply the camera on them
-
+        # Amount of comms needed to beat level
+        self.comms_needed = 0
         # for row,tiles in enumerate(self.map.data):
         #     for col, tile in enumerate(tiles):
         #         if tile == '1':
@@ -178,7 +184,7 @@ class Game:
             elif tile_object.name == 'wall':
                 Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             elif tile_object.name == 'zombie':
-                pass#Mob(self, obj_center.x, obj_center.y)
+                Mob(self, obj_center.x, obj_center.y) # pass
             elif tile_object.name in ITEM_IMAGES.keys():
                 if tile_object.name == 'bonus':
                     ratio = (32, 32)
@@ -191,15 +197,20 @@ class Game:
                     ratio = (32, 32)
                 elif tile_object.name == 'comms':
                     ratio = (48, 48)
+                    self.comms_needed += 1
                 elif tile_object.name in GUN_IMAGES:
                     ratio = (48, 48)
                 elif tile_object.name == 'pistol_ammo' or tile_object.name == 'shotgun_ammo' \
                         or tile_object.name == 'uzi_ammo':
                     ratio = (32, 32)
+                elif tile_object.name == 'landmine':
+                    ratio = (32, 32)
                 Item(self, obj_center, tile_object.name, ratio)
             elif tile_object.type == 'text':  # putting text in object name
                 #print(tile_object.name)
                 Text(self, tile_object.x, tile_object.y, tile_object.name)
+            elif tile_object.name == 'base':
+                Base(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
 
         self.camera = Camera(self.map.width, self.map.height)
         self.draw_debug = False
@@ -256,6 +267,17 @@ class Game:
             for bullet in hits[mob]:
                 mob.health -= bullet.damage
             mob.vel = vec(0, 0)
+        # Mobs touch mine
+        hits = pg.sprite.groupcollide(self.mobs, self.landmines, False, False)
+        for mob in hits:
+            pass
+            #Explosion(self, mob.pos)
+            #mob.kill()
+        # Mobs touch explosion
+        hits = pg.sprite.groupcollide(self.mobs, self.explosions, False, False)
+        for mob in hits:
+            mob.health -= LANDMINE_DAMAGE + self.player.dmg_bonus
+            mob.vel = vec(0, 0)
         # Player touches item
         hits = pg.sprite.spritecollide(self.player, self.items, False)
         for hit in hits:  # TODO: Put sounds in an object instead of a dictionary
@@ -279,23 +301,34 @@ class Game:
                 self.player.uzi_ammo += UZI_AMMO_PICKUP_AMT
             elif hit.type == 'pistol_ammo':
                 hit.kill()
-                self.player.pistol_ammo += PISTOL_AMMO_PICKUP_AMT
+                self.player.pistol_ammo += PISTOL_AMMO_PICKUP_AMT + self.player.ammo_bonus
                 # TODO, get sound: self.effects_sounds['ammo_pickup'].play()
             elif hit.type == 'shotgun_ammo':
                 hit.kill()
-                self.player.shotgun_ammo += SHOTGUN_AMMO_PICKUP_AMT
+                self.player.shotgun_ammo += SHOTGUN_AMMO_PICKUP_AMT + self.player.ammo_bonus
             elif hit.type == 'uzi_ammo':
                 hit.kill()
-                self.player.uzi_ammo += UZI_AMMO_PICKUP_AMT
+                self.player.uzi_ammo += UZI_AMMO_PICKUP_AMT + self.player.ammo_bonus
             elif hit.type == 'landmine':
                 hit.kill()
-                self.player.landmines += 1
+                self.player.landmines += 1 + self.player.ammo_bonus
+            elif hit.type == 'comms':
+                hit.kill()
+                self.player.comms += 1
 
         # Bullet touches BonusItem
-        hits = pg.sprite.groupcollide(self.items, self.bullets, False, True)
+        hits = pg.sprite.groupcollide(self.items, self.bullets, False, False)
         for hit in hits:
-            if hit.type == 'bonus':
+            if isinstance(hit, BonusItem):
                 hit.kill()
+                hit.activate(self.player)
+                self.player.bonuses += 1
+
+        hits = pg.sprite.spritecollide(self.player, self.bases, False, False)
+        for hit in hits:
+            if self.player.comms >= self.comms_needed:
+                print("LEVEL COMPLETE")
+
 
     def draw_grid(self):
         for x in range(0, WINDOW_WIDTH, TILESIZE):
@@ -363,6 +396,8 @@ class Game:
                     self.paused = not self.paused
                 if event.key == pg.K_c:
                     self.player.change_weapon()
+                if event.key == pg.K_m:
+                    self.player.place_mine()
                 if event.key == pg.K_j:
                     self.is_night = not self.is_night
 

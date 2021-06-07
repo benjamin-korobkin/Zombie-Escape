@@ -6,7 +6,6 @@ import pytweening as tween
 from itertools import chain
 vec = pg.math.Vector2
 
-
 def collided_with_wall(sprite, group, dir):
     if dir == 'x':
         hits = pg.sprite.spritecollide(sprite, group, False, collide_hit_rect)
@@ -65,6 +64,14 @@ class Player(pg.sprite.Sprite):
         self.shotgun_ammo = 0
         self.uzi_ammo = 0
         self.landmines = 0
+        self.accuracy_bonus = 0
+        self.fire_rate_bonus = 0
+        self.ammo_bonus = 0
+        self.dmg_bonus = 0
+        self.speed_bonus = 0
+        self.resistance_bonus = 0
+        self.bonuses = 0
+        self.comms = 0
 
     def got_hit(self):
         self.is_damaged = True
@@ -85,7 +92,7 @@ class Player(pg.sprite.Sprite):
         if keys[pg.K_RIGHT] or keys[pg.K_d]:
             self.rot_speed = -PLAYER_ROT_SPEED
         if keys[pg.K_UP] or keys[pg.K_w]:
-            self.vel = vec(PLAYER_SPEED, 0).rotate(-self.rot)
+            self.vel = vec(PLAYER_SPEED + self.speed_bonus, 0).rotate(-self.rot)
         if keys[pg.K_DOWN] or keys[pg.K_s]:
             self.vel = vec(-PLAYER_SPEED/2, 0).rotate(-self.rot)
         if keys[pg.K_SPACE]:
@@ -115,9 +122,9 @@ class Player(pg.sprite.Sprite):
     def shoot(self):
         now = pg.time.get_ticks()
         curr_weapon = WEAPONS[self.curr_weapon]
-        bullet_usage = curr_weapon['bullet_count']
+        bullet_usage = curr_weapon['bullet_usage']
         curr_ammo = self.get_ammo(curr_weapon)
-        if curr_ammo >= bullet_usage and now - self.last_shot > curr_weapon['fire_rate']:  # TODO: else play empty gun sound
+        if curr_ammo >= bullet_usage and now - self.last_shot > curr_weapon['fire_rate'] - self.fire_rate_bonus:  # TODO: else play empty gun sound
             self.last_shot = now
             dir = vec(1, 0).rotate(-self.rot)
             pos = self.pos + BARREL_OFFSET.rotate(-self.rot)
@@ -129,9 +136,9 @@ class Player(pg.sprite.Sprite):
             snd.play()
             MuzzleFlash(self.game, pos)
             self.reduce_ammo(curr_weapon)
-            for i in range(bullet_usage):
-                spread = uniform(-curr_weapon['bullet_spread'], curr_weapon['bullet_spread'])
-                Bullet(self.game, pos, dir.rotate(spread), curr_weapon['damage'])
+            for i in range(curr_weapon['bullet_count']):
+                spread = uniform(min(-curr_weapon['bullet_spread'] + self.accuracy_bonus, 0), curr_weapon['bullet_spread'])
+                Bullet(self.game, pos, dir.rotate(spread), curr_weapon['damage'] + self.dmg_bonus)
 
     def change_weapon(self):
         self.weapon_selection += 1
@@ -157,6 +164,12 @@ class Player(pg.sprite.Sprite):
             self.shotgun_ammo -= 2
         elif curr_weapon == 'uzi':
             self.uzi_ammo -= 1
+
+    def place_mine(self):
+        if self.landmines >= 1 or True:
+            #Landmine(self.game, self.pos, LANDMINE_DAMAGE + self.dmg_bonus)
+            Explosion(self.game, self.pos)
+            self.landmines -= 1
 
 class Mob(pg.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -282,6 +295,66 @@ class Bullet(pg.sprite.Sprite):
                 if target_dist.length_squared() < MOB_DETECT_RADIUS ** 2:
                     target.is_chasing = True
 
+class Landmine(pg.sprite.Sprite):
+    def __init__(self, game, pos, damage):
+        self._layer = ITEMS_LAYER  # Todo: Change if need be
+        self.groups = game.all_sprites, game.landmines
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.image = game.item_images['placed_mine']
+        self.image = pg.transform.scale(self.image, (36, 36))
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.hit_rect = self.rect
+        self.pos = vec(pos)  # create new vector so we're not referencing the player's pos directly
+        self.rect.center = self.pos
+        self.targets = self.game.mobs
+        self.damage = damage
+
+
+class Explosion(pg.sprite.Sprite):
+    def __init__(self, game, pos):
+        self._layer = EFFECTS_LAYER
+        self.groups = game.all_sprites, game.explosions
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.pos = pos
+        explosion_sheet = game.explosion_sheet
+        self.current_frame = 0
+        self.last_update = pg.time.get_ticks()
+        self.spawn_time = pg.time.get_ticks()
+        self.expl_frames = []
+        EXPL_WIDTH = 130
+        EXPL_HEIGHT = 130
+        x = 0
+        y = -25
+        for i in range(5):  # TODO: Move this to main.py when done
+            for j in range(5):
+                img = pg.Surface((EXPL_WIDTH, EXPL_HEIGHT))
+                img.blit(explosion_sheet, (0, 0), (x, y, EXPL_WIDTH, EXPL_HEIGHT))
+                img.set_colorkey(BLACK)
+                img = pg.transform.scale(img, (round(EXPL_WIDTH*2.8), round(EXPL_HEIGHT*2.8)))
+                self.expl_frames.append(img)
+                x += EXPL_WIDTH
+            x = 0
+            y += EXPL_HEIGHT
+        self.image = self.expl_frames[0]
+        self.rect = self.image.get_rect()
+        self.hit_rect = self.rect
+        self.rect.center = pos
+
+    def update(self):
+        now = pg.time.get_ticks()
+        if now - self.last_update > 15:
+            self.last_update = now
+            self.image = self.expl_frames[(self.current_frame + 1)]  # Remove the mod after
+            self.rect = self.image.get_rect()
+            self.hit_rect = self.rect
+            self.rect.center = self.pos
+            self.current_frame += 1
+            if self.current_frame >= len(self.expl_frames) - 1:
+                self.kill()
+
 class MuzzleFlash(pg.sprite.Sprite):
     def __init__(self, game, pos):
         self._layer = EFFECTS_LAYER
@@ -290,7 +363,6 @@ class MuzzleFlash(pg.sprite.Sprite):
         self.game = game
         size = randint(20, 30)
         self.image = pg.transform.scale(choice(game.gun_flashes), (size, size))
-        #self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.hit_rect = self.rect
         self.pos = pos
@@ -318,6 +390,18 @@ class Obstacle(pg.sprite.Sprite):
     def __init__(self, game, x, y, w, h):
         self._layer = WALL_LAYER
         self.groups = game.walls
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.rect = pg.Rect(x, y, w, h)
+        self.x = x
+        self.y = y
+        self.rect.x = x
+        self.rect.y = y
+
+class Base(pg.sprite.Sprite):
+    def __init__(self, game, x, y, w, h):
+        self._layer = WALL_LAYER
+        self.groups = game.bases
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.rect = pg.Rect(x, y, w, h)
@@ -382,8 +466,27 @@ class BonusItem(Item):
             self.step = 0  # Restart/reposition
             self.dir *= -1  # allows us to switch btwn up and down
 
+    def activate(self, plyr):
+        txt = ""
+        if plyr.bonuses % 5 == 0:
+            plyr.speed_bonus += 25
+            txt = "SPEED BONUS!"
+        elif plyr.bonuses % 4 == 0:
+            plyr.dmg_bonus += 2
+            txt = "DAMAGE BONUS!"
+        elif plyr.bonuses % 3 == 0:
+            plyr.ammo_bonus += 4
+            txt = "AMMO PICKUP BONUS!"
+        elif plyr.bonuses % 2 == 0:
+            plyr.fire_rate_bonus += 50
+            txt = "FIRE RATE BONUS!"
+        else:
+            plyr.accuracy_bonus += 4
+            txt = "ACCURACY BONUS!"
+        Text(self.game, self.pos.x, self.pos.y, txt, 24)
+
 class Text(pg.sprite.Sprite):
-    def __init__(self, game, x, y, text):
+    def __init__(self, game, x, y, text, font_size=32):
         self._layer = EFFECTS_LAYER
         self.groups = game.all_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
@@ -391,7 +494,20 @@ class Text(pg.sprite.Sprite):
         self.x = x
         self.y = y
         self.text = text
-        font = pg.font.Font(self.game.title_font, 24)  # font_name, size
+        font = pg.font.Font(self.game.title_font, font_size)  # font_name, size
         self.image = font.render(text, True, BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
+
+class Spritesheet:
+    # Utility class for loading and parsing spritesheets
+    def __init__(self, filename):
+        self.spritesheet = pg.image.load(filename).convert()
+
+    def get_image(self, x, y, width, height):
+        # grab an image out of a larger spritesheet
+        image = pg.Surface((width, height))
+        image.set_colorkey(BLACK)
+        image.blit(self.spritesheet, (0, 0), (x, y, width, height))
+        image = pg.transform.scale(image, (width//1, height//1))  # // --> force to int
+        return image

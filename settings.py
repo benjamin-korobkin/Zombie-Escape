@@ -47,7 +47,7 @@ WEAPONS['pistol'] = {
     'bullet_lifetime': 1250,
     'fire_rate': 250,  # todo: Increase in final game
     'kickback': 200,
-    'bullet_spread': 5,
+    'bullet_spread': 6,
     'damage': 10,
     'bullet_count': 1,
     'bullet_usage': 1
@@ -58,7 +58,7 @@ WEAPONS['shotgun'] = {
     'bullet_lifetime': 500,
     'fire_rate': 900,
     'kickback': 500,
-    'bullet_spread': 20,
+    'bullet_spread': 24,
     'damage': 5,
     'bullet_count': 5,
     'bullet_usage': 2
@@ -68,11 +68,13 @@ WEAPONS['uzi'] = {
     'bullet_lifetime': 750,
     'fire_rate': 100,
     'kickback': 300,
-    'bullet_spread': 15,
+    'bullet_spread': 16,
     'damage': 4,
     'bullet_count': 1,
     'bullet_usage': 1
 }
+
+LANDMINE_DAMAGE = 35
 # 'bullet_size': 'lg'
 # 'bullet_size': 'sm'
 
@@ -96,7 +98,8 @@ ITEM_IMAGES = {
     "comms": "comms_icon.png",
     "shotgun": "shotgun.png",
     "pistol": "pistol.png",
-    "uzi": "uzi.png"
+    "uzi": "uzi.png",
+    "placed_mine": "landmine.png"
 }
 
 GUN_IMAGES = {
@@ -117,7 +120,7 @@ FLASH_DURATION = 40  # ms
 SPLAT_IMAGES = ['blood-splatter1.png', 'blood-splatter2.png', 'blood-splatter3.png', 'blood-splatter4.png']
 
 ITEM_BOB_RANGE = 50
-ITEM_BOB_SPEED = 1
+ITEM_BOB_SPEED = 3
 
 DAMAGE_ALPHA = [i for i in range(0, 255, 20)]
 ITEM_ALPHA = [i for i in range(0, 255, 2)]
