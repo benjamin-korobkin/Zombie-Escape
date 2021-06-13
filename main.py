@@ -74,6 +74,21 @@ class Game:
         music_folder = path.join(self.game_folder, 'music')
         self.map_folder = path.join(self.game_folder, 'maps')
         self.explosion_sheet = pg.image.load(path.join(img_folder, 'explosion.png')).convert_alpha()
+        self.explosion_frames = []
+        EXPL_WIDTH = 130
+        EXPL_HEIGHT = 130
+        x = 0
+        y = -25
+        for i in range(5):
+            for j in range(5):
+                img = pg.Surface((EXPL_WIDTH, EXPL_HEIGHT))
+                img.blit(self.explosion_sheet, (0, 0), (x, y, EXPL_WIDTH, EXPL_HEIGHT))
+                img.set_colorkey(BLACK)
+                img = pg.transform.scale(img, (round(EXPL_WIDTH * 2.8), round(EXPL_HEIGHT * 2.8)))
+                self.explosion_frames.append(img)
+                x += EXPL_WIDTH
+            x = 0
+            y += EXPL_HEIGHT
 
         self.title_font = path.join(img_folder, 'DemonSker-zyzD.ttf')  # TTF = True Type Font
         self.menu_font = path.join(img_folder, 'DemonSker-zyzD.ttf')  # TODO: Experiment
@@ -152,7 +167,10 @@ class Game:
 
     def new(self):
         # initialize all variables and do all the setup for a new game
-        self.all_sprites = pg.sprite.LayeredUpdates()  #Group()
+        self.load_level(LEVELS['tutorial'])
+
+    def load_level(self, level_name=LEVELS['tutorial']):
+        self.all_sprites = pg.sprite.LayeredUpdates()  # Group()
         self.walls = pg.sprite.Group()
         self.bases = pg.sprite.Group()
         self.mobs = pg.sprite.Group()
@@ -160,22 +178,15 @@ class Game:
         self.items = pg.sprite.Group()
         self.landmines = pg.sprite.Group()
         self.explosions = pg.sprite.Group()
-
         # Grab our game layout file (map)
-        self.map = TiledMap(path.join(self.map_folder, 'tutorial.tmx')) #'level1.tmx'
+        self.current_lvl = level_name
+        self.map = TiledMap(path.join(self.map_folder, level_name))
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
         self.texts = pg.sprite.Group()  # Created sprite group of texts, and apply the camera on them
         # Amount of comms needed to beat level
-        self.comms_needed = 0
-        # for row,tiles in enumerate(self.map.data):
-        #     for col, tile in enumerate(tiles):
-        #         if tile == '1':
-        #             Wall(self, col, row)
-        #         if tile == 'P':
-        #             self.player = Player(self, col, row)
-        #         if tile == 'M':
-        #             Mob(self, col, row)
+        self.comms_req = 0
+        # load everything on map
         for tile_object in self.map.tmxdata.objects:
             obj_center = vec(tile_object.x + tile_object.width / 2,
                              tile_object.y + tile_object.height / 2)
@@ -197,7 +208,7 @@ class Game:
                     ratio = (32, 32)
                 elif tile_object.name == 'comms':
                     ratio = (48, 48)
-                    self.comms_needed += 1
+                    self.comms_req += 1
                 elif tile_object.name in GUN_IMAGES:
                     ratio = (48, 48)
                 elif tile_object.name == 'pistol_ammo' or tile_object.name == 'shotgun_ammo' \
@@ -220,7 +231,6 @@ class Game:
         self.is_night = False
         self.effects_sounds['level_start'].play()
 
-
     def run(self):
         # game loop - set self.playing = False to end the game
         self.playing = True
@@ -240,22 +250,30 @@ class Game:
         # update portion of the game loop
         self.all_sprites.update()
         self.camera.update(self.player)
-        # Game over
-        if len(self.mobs) == 0: # TODO: Change game over condition
-            pass
-            #self.playing = False
+
         # Mobs hit player
         hits = pg.sprite.spritecollide(self.player, self.mobs, False, collide_hit_rect)
         if not self.player.is_damaged and hits:
             self.player.got_hit()
             self.player.pos += vec(MOB_KNOCKBACK, 0).rotate(-hits[0].rot)
             for hit in hits:
-                    self.player.health -= MOB_DAMAGE
-                    if random() < 0.9:
-                        choice(self.player_hit_sounds).play()
-                    hit.vel = vec(0, 0)
-                    if self.player.health <= 0:
-                        self.playing = False
+                self.player.health -= MOB_DAMAGE
+                if random() < 0.9:
+                    choice(self.player_hit_sounds).play()
+                hit.vel = vec(0, 0)
+
+        # Player touches explosion
+        hits = pg.sprite.spritecollide(self.player, self.explosions, False, collide_hit_rect)
+        if not self.player.is_damaged and hits:
+            self.player.got_hit()
+            self.player.pos -= vec(LANDMINE_KNOCKBACK, 0).rotate(self.player.rot)
+            for hit in hits:
+                self.player.health -= 2
+                if random() < 0.9:
+                    choice(self.player_hit_sounds).play()
+                hit.vel = vec(0, 0)
+        if self.player.health <= 0:
+            self.load_level(self.current_lvl)  # self.playing = False
 
         # Bullets hit mobs
         hits = pg.sprite.groupcollide(self.mobs, self.bullets, False, True)
@@ -268,11 +286,9 @@ class Game:
                 mob.health -= bullet.damage
             mob.vel = vec(0, 0)
         # Mobs touch mine
-        hits = pg.sprite.groupcollide(self.mobs, self.landmines, False, False)
+        hits = pg.sprite.groupcollide(self.mobs, self.landmines, False, True)
         for mob in hits:
-            pass
-            #Explosion(self, mob.pos)
-            #mob.kill()
+            Explosion(self, mob.pos)
         # Mobs touch explosion
         hits = pg.sprite.groupcollide(self.mobs, self.explosions, False, False)
         for mob in hits:
@@ -323,11 +339,16 @@ class Game:
                 hit.kill()
                 hit.activate(self.player)
                 self.player.bonuses += 1
-
+        # Check if we beat level (returned comms)
         hits = pg.sprite.spritecollide(self.player, self.bases, False, False)
         for hit in hits:
-            if self.player.comms >= self.comms_needed:
-                print("LEVEL COMPLETE")
+            if self.player.comms >= self.comms_req:
+                self.player.kill()
+                if self.current_lvl == LEVELS['tutorial']:
+                    self.show_menu_screen("TUTORIAL COMPLETE --- PRESS ANY KEY TO CONTINUE")
+                    self.load_level(LEVELS['level1'])
+                elif self.current_lvl == LEVELS['level1']:
+                    self.playing = False
 
 
     def draw_grid(self):
@@ -401,10 +422,11 @@ class Game:
                 if event.key == pg.K_j:
                     self.is_night = not self.is_night
 
-    def show_start_screen(self):
+    def show_menu_screen(self, txt):
         self.paused = True
         self.screen.fill(BLACK)
-        self.draw_text("PRESS ANY KEY TO BEGIN", self.menu_font, 48, RED,
+
+        self.draw_text(txt, self.menu_font, 48, RED,
                        WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, align="center")
         pg.display.flip()
         self.wait_for_key()
@@ -433,8 +455,8 @@ class Game:
 
 # create the game object
 g = Game()
-g.show_start_screen()
+g.show_menu_screen("PRESS ANY KEY TO BEGIN")
 while True:
-    g.new()
+    g.load_level()
     g.run()
-    #g.show_go_screen()
+    g.show_go_screen()

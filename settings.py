@@ -75,6 +75,7 @@ WEAPONS['uzi'] = {
 }
 
 LANDMINE_DAMAGE = 35
+LANDMINE_KNOCKBACK = 50
 # 'bullet_size': 'lg'
 # 'bullet_size': 'sm'
 
@@ -153,4 +154,10 @@ EFFECTS_SOUNDS = {
     'level_start': 'level_start.wav',
     'health_up': 'health_pack.wav',
     'gun_pickup': 'gun_pickup.wav'
+}
+
+# Dict of level names
+LEVELS = {
+    'tutorial': 'tutorial.tmx',
+    'level1': 'level1.tmx'
 }

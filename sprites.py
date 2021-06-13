@@ -166,9 +166,10 @@ class Player(pg.sprite.Sprite):
             self.uzi_ammo -= 1
 
     def place_mine(self):
-        if self.landmines >= 1 or True:
-            #Landmine(self.game, self.pos, LANDMINE_DAMAGE + self.dmg_bonus)
-            Explosion(self.game, self.pos)
+        if self.landmines >= 1:
+            # spawn mine in front of player. Not under.
+            pos = self.pos + vec(40, 0).rotate(-self.rot)
+            Landmine(self.game, pos, LANDMINE_DAMAGE + self.dmg_bonus)
             self.landmines -= 1
 
 class Mob(pg.sprite.Sprite):
@@ -297,7 +298,7 @@ class Bullet(pg.sprite.Sprite):
 
 class Landmine(pg.sprite.Sprite):
     def __init__(self, game, pos, damage):
-        self._layer = ITEMS_LAYER  # Todo: Change if need be
+        self._layer = ITEMS_LAYER  # May change
         self.groups = game.all_sprites, game.landmines
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
@@ -311,7 +312,6 @@ class Landmine(pg.sprite.Sprite):
         self.targets = self.game.mobs
         self.damage = damage
 
-
 class Explosion(pg.sprite.Sprite):
     def __init__(self, game, pos):
         self._layer = EFFECTS_LAYER
@@ -319,26 +319,10 @@ class Explosion(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.pos = pos
-        explosion_sheet = game.explosion_sheet
         self.current_frame = 0
         self.last_update = pg.time.get_ticks()
-        self.spawn_time = pg.time.get_ticks()
-        self.expl_frames = []
-        EXPL_WIDTH = 130
-        EXPL_HEIGHT = 130
-        x = 0
-        y = -25
-        for i in range(5):  # TODO: Move this to main.py when done
-            for j in range(5):
-                img = pg.Surface((EXPL_WIDTH, EXPL_HEIGHT))
-                img.blit(explosion_sheet, (0, 0), (x, y, EXPL_WIDTH, EXPL_HEIGHT))
-                img.set_colorkey(BLACK)
-                img = pg.transform.scale(img, (round(EXPL_WIDTH*2.8), round(EXPL_HEIGHT*2.8)))
-                self.expl_frames.append(img)
-                x += EXPL_WIDTH
-            x = 0
-            y += EXPL_HEIGHT
-        self.image = self.expl_frames[0]
+        # self.spawn_time = pg.time.get_ticks()
+        self.image = game.explosion_frames[0]
         self.rect = self.image.get_rect()
         self.hit_rect = self.rect
         self.rect.center = pos
@@ -347,12 +331,12 @@ class Explosion(pg.sprite.Sprite):
         now = pg.time.get_ticks()
         if now - self.last_update > 15:
             self.last_update = now
-            self.image = self.expl_frames[(self.current_frame + 1)]  # Remove the mod after
+            self.image = self.game.explosion_frames[(self.current_frame + 1)]
             self.rect = self.image.get_rect()
             self.hit_rect = self.rect
             self.rect.center = self.pos
             self.current_frame += 1
-            if self.current_frame >= len(self.expl_frames) - 1:
+            if self.current_frame >= len(self.game.explosion_frames) - 1:
                 self.kill()
 
 class MuzzleFlash(pg.sprite.Sprite):
