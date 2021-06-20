@@ -169,7 +169,7 @@ class Game:
         # initialize all variables and do all the setup for a new game
         self.load_level(LEVELS['tutorial'])
 
-    def load_level(self, level_name=LEVELS['tutorial']):
+    def load_level(self, level_name=LEVELS['tutorial'], stats=None):
         self.all_sprites = pg.sprite.LayeredUpdates()  # Group()
         self.walls = pg.sprite.Group()
         self.bases = pg.sprite.Group()
@@ -191,7 +191,10 @@ class Game:
             obj_center = vec(tile_object.x + tile_object.width / 2,
                              tile_object.y + tile_object.height / 2)
             if tile_object.name == 'player':
-                self.player = Player(self, obj_center.x, obj_center.y)
+                if stats:
+                    self.player = Player(self, obj_center.x, obj_center.y, stats)
+                else:
+                    self.player = Player(self, obj_center.x, obj_center.y)
             elif tile_object.name == 'wall':
                 Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             elif tile_object.name == 'zombie':
@@ -268,7 +271,7 @@ class Game:
             self.player.got_hit()
             self.player.pos -= vec(LANDMINE_KNOCKBACK, 0).rotate(self.player.rot)
             for hit in hits:
-                self.player.health -= 2
+                self.player.health -= LANDMINE_DAMAGE
                 if random() < 0.9:
                     choice(self.player_hit_sounds).play()
                 hit.vel = vec(0, 0)
@@ -292,7 +295,7 @@ class Game:
         # Mobs touch explosion
         hits = pg.sprite.groupcollide(self.mobs, self.explosions, False, False)
         for mob in hits:
-            mob.health -= LANDMINE_DAMAGE + self.player.dmg_bonus
+            mob.health -= LANDMINE_DAMAGE + self.player.stats['dmg_bonus']
             mob.vel = vec(0, 0)
         # Player touches item
         hits = pg.sprite.spritecollide(self.player, self.items, False)
@@ -304,30 +307,30 @@ class Game:
             elif hit.type == 'shotgun':
                 hit.kill()
                 self.effects_sounds['gun_pickup'].play()
-                self.player.weapons.append('shotgun')
+                self.player.stats['weapons'].append('shotgun')
                 self.player.weapon_selection += 1
                 self.player.curr_weapon = 'shotgun'
-                self.player.shotgun_ammo += SHOTGUN_AMMO_PICKUP_AMT
+                self.player.stats['shotgun_ammo'] += SHOTGUN_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
             elif hit.type == 'uzi':
                 hit.kill()
                 self.effects_sounds['gun_pickup'].play()
-                self.player.weapons.append('uzi')
+                self.player.stats['weapons'].append('uzi')
                 self.player.weapon_selection += 1
                 self.player.curr_weapon = 'uzi'
-                self.player.uzi_ammo += UZI_AMMO_PICKUP_AMT
+                self.player.stats['uzi_ammo'] += UZI_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
             elif hit.type == 'pistol_ammo':
                 hit.kill()
-                self.player.pistol_ammo += PISTOL_AMMO_PICKUP_AMT + self.player.ammo_bonus
+                self.player.stats['pistol_ammo'] += PISTOL_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
                 # TODO, get sound: self.effects_sounds['ammo_pickup'].play()
             elif hit.type == 'shotgun_ammo':
                 hit.kill()
-                self.player.shotgun_ammo += SHOTGUN_AMMO_PICKUP_AMT + self.player.ammo_bonus
+                self.player.stats['shotgun_ammo'] += SHOTGUN_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
             elif hit.type == 'uzi_ammo':
                 hit.kill()
-                self.player.uzi_ammo += UZI_AMMO_PICKUP_AMT + self.player.ammo_bonus
+                self.player.stats['uzi_ammo'] += UZI_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
             elif hit.type == 'landmine':
                 hit.kill()
-                self.player.landmines += 1 + self.player.ammo_bonus
+                self.player.stats['landmines'] += 1 + self.player.stats['ammo_bonus']
             elif hit.type == 'comms':
                 hit.kill()
                 self.player.comms += 1
@@ -338,7 +341,7 @@ class Game:
             if isinstance(hit, BonusItem):
                 hit.kill()
                 hit.activate(self.player)
-                self.player.bonuses += 1
+                self.player.stats['bonuses'] += 1
         # Check if we beat level (returned comms)
         hits = pg.sprite.spritecollide(self.player, self.bases, False, False)
         for hit in hits:
@@ -346,7 +349,7 @@ class Game:
                 self.player.kill()
                 if self.current_lvl == LEVELS['tutorial']:
                     self.show_menu_screen("TUTORIAL COMPLETE --- PRESS ANY KEY TO CONTINUE")
-                    self.load_level(LEVELS['level1'])
+                    self.load_level(LEVELS['level1'], self.player.stats)
                 elif self.current_lvl == LEVELS['level1']:
                     self.playing = False
 
@@ -391,9 +394,9 @@ class Game:
         self.screen.blit(self.gun_images[self.player.curr_weapon], (10, 25))
         # Display current ammo
         curr_weapon_ammo_amt = self.player.get_ammo(self.player.curr_weapon)
-        self.draw_text(' - {}'.format((curr_weapon_ammo_amt)), self.hud_font, 30, BLACK, 45, 30, align='nw')
+        self.draw_text(' - {}'.format(curr_weapon_ammo_amt), self.hud_font, 30, BLACK, 45, 30, align='nw')
 
-         # display zombies left
+        # display zombies left
         self.draw_text('ZOMBIES - {}'.format(len(self.mobs)), self.hud_font, 30, WHITE,
                        WINDOW_WIDTH - 10, 10, align='ne')
 

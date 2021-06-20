@@ -32,7 +32,7 @@ def collided_with_wall(sprite, group, dir):
             sprite.hit_rect.centery = sprite.pos.y
 
 class Player(pg.sprite.Sprite):
-    def __init__(self, game, x, y):
+    def __init__(self, game, x, y, stats=None):
         self._layer = PLAYER_LAYER
         self.groups = game.all_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
@@ -56,22 +56,27 @@ class Player(pg.sprite.Sprite):
         self.last_shot = 0
         self.health = PLAYER_MAX_HEALTH
         self.is_damaged = False
-        self.weapons = ['pistol']
-        self.weapon_selection = 0
-        # Consider using itertools to cycle thru weapons
-        self.curr_weapon = self.weapons[self.weapon_selection]
-        self.pistol_ammo = 0
-        self.shotgun_ammo = 0
-        self.uzi_ammo = 0
-        self.landmines = 0
-        self.accuracy_bonus = 0
-        self.fire_rate_bonus = 0
-        self.ammo_bonus = 0
-        self.dmg_bonus = 0
-        self.speed_bonus = 0
-        self.resistance_bonus = 0
-        self.bonuses = 0
         self.comms = 0
+        self.weapon_selection = 0
+        if stats:
+            self.stats = stats
+        else:
+            self.stats = {  # TODO: Lots of refactoring
+                'weapons': ['pistol'],
+                'weapon_selection': 0,
+                'pistol_ammo': 0,
+                'shotgun_ammo': 0,
+                'uzi_ammo': 0,
+                'landmines': 0,
+                'accuracy_bonus': 0,
+                'fire_rate_bonus': 0,
+                'ammo_bonus': 0,
+                'dmg_bonus': 0,
+                'speed_bonus': 0,
+                'resistance_bonus': 0,
+                'bonuses': 0,
+            }
+        self.curr_weapon = self.stats['weapons'][self.weapon_selection]
 
     def got_hit(self):
         self.is_damaged = True
@@ -92,7 +97,7 @@ class Player(pg.sprite.Sprite):
         if keys[pg.K_RIGHT] or keys[pg.K_d]:
             self.rot_speed = -PLAYER_ROT_SPEED
         if keys[pg.K_UP] or keys[pg.K_w]:
-            self.vel = vec(PLAYER_SPEED + self.speed_bonus, 0).rotate(-self.rot)
+            self.vel = vec(PLAYER_SPEED + self.stats['speed_bonus'], 0).rotate(-self.rot)
         if keys[pg.K_DOWN] or keys[pg.K_s]:
             self.vel = vec(-PLAYER_SPEED/2, 0).rotate(-self.rot)
         if keys[pg.K_SPACE]:
@@ -124,7 +129,7 @@ class Player(pg.sprite.Sprite):
         curr_weapon = WEAPONS[self.curr_weapon]
         bullet_usage = curr_weapon['bullet_usage']
         curr_ammo = self.get_ammo(curr_weapon)
-        if curr_ammo >= bullet_usage and now - self.last_shot > curr_weapon['fire_rate'] - self.fire_rate_bonus:  # TODO: else play empty gun sound
+        if curr_ammo >= bullet_usage and now - self.last_shot > curr_weapon['fire_rate'] - self.stats['fire_rate_bonus']:  # TODO: else play empty gun sound
             self.last_shot = now
             dir = vec(1, 0).rotate(-self.rot)
             pos = self.pos + BARREL_OFFSET.rotate(-self.rot)
@@ -137,40 +142,40 @@ class Player(pg.sprite.Sprite):
             MuzzleFlash(self.game, pos)
             self.reduce_ammo(curr_weapon)
             for i in range(curr_weapon['bullet_count']):
-                spread = uniform(min(-curr_weapon['bullet_spread'] + self.accuracy_bonus, 0), curr_weapon['bullet_spread'])
-                Bullet(self.game, pos, dir.rotate(spread), curr_weapon['damage'] + self.dmg_bonus)
+                spread = uniform(min(-curr_weapon['bullet_spread'] + self.stats['accuracy_bonus'], 0), curr_weapon['bullet_spread'])
+                Bullet(self.game, pos, dir.rotate(spread), curr_weapon['damage'] + self.stats['dmg_bonus'])
 
     def change_weapon(self):
         self.weapon_selection += 1
-        if self.weapon_selection >= len(self.weapons):
+        if self.weapon_selection >= len(self.stats['weapons']):
             self.weapon_selection = 0
-        self.curr_weapon = self.weapons[self.weapon_selection]
+        self.curr_weapon = self.stats['weapons'][self.weapon_selection]
         # print("switched to ", self.curr_weapon) # TODO: display weapon name
 
     def get_ammo(self, weapon):
         curr_weapon = self.curr_weapon
         if curr_weapon == 'pistol':
-            return self.pistol_ammo
+            return self.stats['pistol_ammo']
         elif curr_weapon == 'shotgun':
-            return self.shotgun_ammo
+            return self.stats['shotgun_ammo']
         elif curr_weapon == 'uzi':
-            return self.uzi_ammo
+            return self.stats['uzi_ammo']
 
     def reduce_ammo(self, weapon):
         curr_weapon = self.curr_weapon
         if curr_weapon == 'pistol':
-            self.pistol_ammo -= 1
+            self.stats['pistol_ammo'] -= 1
         elif curr_weapon == 'shotgun':
-            self.shotgun_ammo -= 2
+            self.stats['shotgun_ammo'] -= 2
         elif curr_weapon == 'uzi':
-            self.uzi_ammo -= 1
+            self.stats['uzi_ammo'] -= 1
 
     def place_mine(self):
-        if self.landmines >= 1:
+        if self.stats['landmines'] >= 1:
             # spawn mine in front of player. Not under.
             pos = self.pos + vec(40, 0).rotate(-self.rot)
-            Landmine(self.game, pos, LANDMINE_DAMAGE + self.dmg_bonus)
-            self.landmines -= 1
+            Landmine(self.game, pos, LANDMINE_DAMAGE + self.stats['dmg_bonus'])
+            self.stats['landmines'] -= 1
 
 class Mob(pg.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -452,20 +457,20 @@ class BonusItem(Item):
 
     def activate(self, plyr):
         txt = ""
-        if plyr.bonuses % 5 == 0:
-            plyr.speed_bonus += 25
+        if plyr.stats['bonuses'] % 5 == 0:
+            plyr.stats['speed_bonus'] += 25
             txt = "SPEED BONUS!"
-        elif plyr.bonuses % 4 == 0:
-            plyr.dmg_bonus += 2
+        elif plyr.stats['bonuses'] % 4 == 0:
+            plyr.stats['dmg_bonus'] += 2
             txt = "DAMAGE BONUS!"
-        elif plyr.bonuses % 3 == 0:
-            plyr.ammo_bonus += 4
+        elif plyr.stats['bonuses'] % 3 == 0:
+            plyr.stats['ammo_bonus'] += 4
             txt = "AMMO PICKUP BONUS!"
-        elif plyr.bonuses % 2 == 0:
-            plyr.fire_rate_bonus += 50
+        elif plyr.stats['bonuses'] % 2 == 0:
+            plyr.stats['fire_rate_bonus'] += 50
             txt = "FIRE RATE BONUS!"
         else:
-            plyr.accuracy_bonus += 4
+            plyr.stats['accuracy_bonus'] += 4
             txt = "ACCURACY BONUS!"
         Text(self.game, self.pos.x, self.pos.y, txt, 24)
 
