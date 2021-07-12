@@ -18,7 +18,7 @@ while g.running:
     # g.show_menu_screen("PRESS ANY KEY TO BEGIN")
     lvl = g.curr_menu.display_menu()
     if g.playing:
-        g.load_level()
+        g.load_level(level_name=lvl)
         while g.playing:
             g.game_loop()  # Runs the game loop
             g.show_go_screen()

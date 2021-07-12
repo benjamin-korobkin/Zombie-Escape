@@ -107,10 +107,8 @@ class MainMenu(Menu):
         if self.game.START_KEY:
             if self.state == 'continue':
                 self.game.playing = True
-                return self.curr_lvl  # TODO: FIX PROBLEM WHEN NO CONTINUE!!!
             if self.state == 'new game':
                 self.game.playing = True
-                return LEVELS['tutorial']
             elif self.state == 'options':
                 self.game.curr_menu = self.game.options_menu
             elif self.state == 'credits':
