@@ -1,4 +1,5 @@
 import pygame as pg
+import pygame_menu
 from settings import *
 from tilemap import collide_hit_rect
 from random import uniform, choice, randint, random
@@ -61,7 +62,7 @@ class Player(pg.sprite.Sprite):
         if stats:
             self.stats = stats
         else:
-            self.stats = {  # TODO: Lots of refactoring
+            self.stats = {
                 'weapons': ['pistol'],
                 'weapon_selection': 0,
                 'pistol_ammo': 0,
@@ -87,6 +88,7 @@ class Player(pg.sprite.Sprite):
         # self.vx, self.vy = 0, 0
         self.vel = vec(0, 0)
         keys = pg.key.get_pressed()
+        pg.key.set_repeat()
         # Keeping this here for pre-rotate movement reference:
         # if self.vel.x != 0 and self.vel.y != 0:
         # self.vel *= 0.7071
@@ -130,15 +132,15 @@ class Player(pg.sprite.Sprite):
         bullet_usage = curr_weapon['bullet_usage']
         curr_ammo = self.get_ammo(curr_weapon)
         if curr_ammo >= bullet_usage and now - self.last_shot > curr_weapon['fire_rate'] - self.stats['fire_rate_bonus']:  # TODO: else play empty gun sound
+            snd = choice(self.game.weapon_sounds[self.curr_weapon])
+            snd.play()
             self.last_shot = now
             dir = vec(1, 0).rotate(-self.rot)
             pos = self.pos + BARREL_OFFSET.rotate(-self.rot)
             self.vel -= vec(curr_weapon['kickback'], 0).rotate(-self.rot)
-            snd = choice(self.game.weapon_sounds[self.curr_weapon])
             # Interesting code to synchronize sounds, but won't be using it.
             #if snd.get_num_channels() > 2:
             #    snd.stop()
-            snd.play()
             MuzzleFlash(self.game, pos)
             self.reduce_ammo(curr_weapon)
             for i in range(curr_weapon['bullet_count']):
@@ -166,7 +168,7 @@ class Player(pg.sprite.Sprite):
         if curr_weapon == 'pistol':
             self.stats['pistol_ammo'] -= 1
         elif curr_weapon == 'shotgun':
-            self.stats['shotgun_ammo'] -= 2
+            self.stats['shotgun_ammo'] -= 1
         elif curr_weapon == 'uzi':
             self.stats['uzi_ammo'] -= 1
 
@@ -249,7 +251,7 @@ class Mob(pg.sprite.Sprite):
                 self.acc = vec(1, 0).rotate(-self.rot)
                 self.avoid_mobs()
                 self.acc.scale_to_length(self.speed)
-                self.acc += self.vel * -1  # friction to slow down movement
+                self.acc += self.vel * -1.3  # friction to slow down movement
                 self.vel += self.acc * self.game.dt
                 # Using equation of motion
                 self.pos += self.vel * self.game.dt + (0.5 * self.acc * (self.game.dt ** 2))

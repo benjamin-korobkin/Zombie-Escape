@@ -61,7 +61,7 @@ WEAPONS['shotgun'] = {
     'bullet_spread': 24,
     'damage': 5,
     'bullet_count': 5,
-    'bullet_usage': 2
+    'bullet_usage': 1
 }
 WEAPONS['uzi'] = {
     'bullet_speed': 1000,
@@ -81,7 +81,7 @@ LANDMINE_KNOCKBACK = 50
 
 # Mob settings
 MOB_IMG = 'zoimbie1_hold.png'
-MOB_SPEEDS = [120, 135, 150, 165]
+MOB_SPEEDS = [120, 135, 150, 160]
 MOB_HIT_RECT = pg.Rect(0, 0, 30, 30)
 MOB_DAMAGE = 10
 MOB_KNOCKBACK = 25
@@ -111,14 +111,14 @@ GUN_IMAGES = {
 
 # Item effectiveness
 HEALTH_PICKUP_AMT = 20
-PISTOL_AMMO_PICKUP_AMT = 5
-SHOTGUN_AMMO_PICKUP_AMT = 10
-UZI_AMMO_PICKUP_AMT = 12
+PISTOL_AMMO_PICKUP_AMT = 7
+SHOTGUN_AMMO_PICKUP_AMT = 6
+UZI_AMMO_PICKUP_AMT = 14
 
 # Effects
 MUZZLE_FLASHES = ["whitePuff15.png", "whitePuff16.png", "whitePuff17.png", "whitePuff18.png"]
 FLASH_DURATION = 40  # ms
-SPLAT_IMAGES = ['blood-splatter1.png', 'blood-splatter2.png', 'blood-splatter3.png', 'blood-splatter4.png']
+SPLAT_IMAGES = ['blood-splatter1.png', 'blood-splatter3.png', 'blood-splatter4.png']
 
 ITEM_BOB_RANGE = 50
 ITEM_BOB_SPEED = 3
@@ -140,7 +140,8 @@ EFFECTS_LAYER = 4
 ITEMS_LAYER = 1
 
 # Sounds
-BG_MUSIC = 'Disturbed-Soundscape.ogg'  # 'espionage.ogg'
+BG_MUSIC = 'Disturbed-Soundscape.ogg'
+MENU_MUSIC = 'espionage.ogg'
 PLAYER_HIT_SOUNDS = ['pain/8.wav', 'pain/9.wav', 'pain/10.wav', 'pain/11.wav']
 ZOMBIE_MOAN_SOUNDS = ['brains2.wav', 'brains3.wav', 'zombie-roar-1.wav', 'zombie-roar-2.wav',
                       'zombie-roar-3.wav', 'zombie-roar-5.wav', 'zombie-roar-6.wav', 'zombie-roar-7.wav']
@@ -154,6 +155,7 @@ EFFECTS_SOUNDS = {
     'level_start': 'level_start.wav',
     'health_up': 'health_pack.wav',
     'gun_pickup': 'gun_pickup.wav'
+    # TODO: Add ammo pickup & explosion
 }
 
 # Dict of level names
