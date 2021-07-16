@@ -81,16 +81,26 @@ class MainMenu(Menu):
                 self.cursor_rect.midtop = (self.quitx + self.cursor_offsetx, self.quity + self.cursor_offsety)
                 self.state = 'quit'
             elif self.state == 'quit':
-                self.cursor_rect.midtop = (self.continuex + self.cursor_offsetx, self.continuey + self.cursor_offsety)
-                self.state = 'continue'
+                if self.show_continue:
+                    self.cursor_rect.midtop = (
+                    self.continuex + self.cursor_offsetx, self.continuey + self.cursor_offsety)
+                    self.state = 'continue'
+                else:
+                    self.cursor_rect.midtop = (self.newgamex + self.cursor_offsetx, self.newgamey + self.cursor_offsety)
+                    self.state = 'new game'
             self.game.DOWN_KEY = False
+
         if self.game.UP_KEY:
             if self.state == 'continue':
                 self.cursor_rect.midtop = (self.quitx + self.cursor_offsetx, self.quity + self.cursor_offsety)
                 self.state = 'quit'
             elif self.state == 'new game':
-                self.cursor_rect.midtop = (self.continuex + self.cursor_offsetx, self.continuey + self.cursor_offsety)
-                self.state = 'continue'
+                if self.show_continue:
+                    self.cursor_rect.midtop = (self.continuex + self.cursor_offsetx, self.continuey + self.cursor_offsety)
+                    self.state = 'continue'
+                else:
+                    self.cursor_rect.midtop = (self.quitx + self.cursor_offsetx, self.quity + self.cursor_offsety)
+                    self.state = 'quit'
             elif self.state == 'quit':
                 self.cursor_rect.midtop = (self.creditsx + self.cursor_offsetx, self.creditsy + self.cursor_offsety)
                 self.state = 'credits'
@@ -108,6 +118,7 @@ class MainMenu(Menu):
             if self.state == 'continue':
                 self.game.playing = True
             if self.state == 'new game':
+                self.curr_lvl = LEVELS['tutorial']
                 self.game.playing = True
             elif self.state == 'options':
                 self.game.curr_menu = self.game.options_menu
@@ -307,6 +318,90 @@ class VolumeMenu(Menu):
             self.run_display = False
         self.game.reset_keys()
 
+class PauseMenu(Menu):
+    def __init__(self, game):
+        Menu.__init__(self, game)
+        text_offset = 60
+        self.initial_state = 'resume'
+        self.state = self.initial_state
+        self.resumex, self.resumey = self.window_centerx, self.window_centery - text_offset
+        self.soundfxx, self.soundfxy = self.window_centerx, self.window_centery
+        self.musicx, self.musicy = self.window_centerx, self.window_centery + text_offset
+        self.toggle_fsx, self.toggle_fsy = self.window_centerx, self.window_centery + text_offset * 2
+        self.save_quitx, self.save_quity = self.window_centerx, self.window_centery + text_offset * 3
+        self.cursor_rect.midtop = (self.soundfxx + self.cursor_offsetx, self.soundfxy + self.cursor_offsety)
+        self.sample_snd = self.game.weapon_sounds['pistol'][0]
+
+    def display_menu(self):
+        self.run_display = True
+        while self.run_display:
+            self.game.menu_events()
+            self.check_input()
+            self.game.screen.fill(BLACK)
+            self.game.draw_text('PAUSED', self.game.menu_font, 60, WHITE, self.window_centerx,
+                                self.title_offset, 'n')
+            self.game.draw_text('Resume', self.game.menu_font, 40, WHITE, self.resumex, self.resumey, 'center')
+            self.game.draw_text('SoundFX - ' + str(int(self.game.soundfx_lvl * 10)), self.game.menu_font, 40, WHITE, self.soundfxx, self.soundfxy, 'center')
+            self.game.draw_text('Music - ' + str(int(self.game.music_lvl * 10)), self.game.menu_font, 40, WHITE, self.musicx, self.musicy, 'center')
+            self.game.draw_text('Toggle Fullscreen', self.game.menu_font, 40, WHITE, self.toggle_fsx, self.toggle_fsy,
+                                'center')
+            self.game.draw_text('Save and Quit', self.game.menu_font, 40, WHITE, self.save_quitx, self.save_quity, 'center')
+
+            self.draw_cursor()
+            self.blit_screen()
+
+    def move_cursor(self):
+        if self.game.DOWN_KEY:
+            if self.state == 'resume':
+                self.cursor_rect.midtop = (self.soundfxx + self.cursor_offsetx, self.soundfxy + self.cursor_offsety)
+                self.state = 'soundfx'
+            elif self.state == 'soundfx':
+                self.cursor_rect.midtop = (self.musicx + self.cursor_offsetx, self.musicy + self.cursor_offsety)
+                self.state = 'music'
+            elif self.state == 'music':
+                self.cursor_rect.midtop = (self.toggle_fsx + self.cursor_offsetx, self.toggle_fsy + self.cursor_offsety)
+                self.state = 'toggle_fs'
+            elif self.state == 'toggle_fs':
+                self.cursor_rect.midtop = (self.save_quitx + self.cursor_offsetx, self.save_quity + self.cursor_offsety)
+                self.state = 'save_quit'
+            elif self.state == 'save_quit':
+                self.cursor_rect.midtop = (self.resumex + self.cursor_offsetx, self.resumey + self.cursor_offsety)
+                self.state = 'resume'
+        elif self.game.UP_KEY:
+            if self.state == 'resume':
+                self.cursor_rect.midtop = (self.save_quitx + self.cursor_offsetx, self.save_quity + self.cursor_offsety)
+                self.state = 'save_quit'
+            elif self.state == 'soundfx':
+                self.cursor_rect.midtop = (self.resumex + self.cursor_offsetx, self.resumey + self.cursor_offsety)
+                self.state = 'resume'
+            elif self.state == 'music':
+                self.cursor_rect.midtop = (self.soundfxx + self.cursor_offsetx, self.soundfxy + self.cursor_offsety)
+                self.state = 'soundfx'
+            elif self.state == 'back':
+                self.cursor_rect.midtop = (self.musicx + self.cursor_offsetx, self.musicy + self.cursor_offsety)
+                self.state = 'music'
+            # TODO: Finish
+
+    def check_input(self):
+        self.move_cursor()
+        if self.game.LEFT_KEY:
+            if self.state == 'soundfx' and self.game.soundfx_lvl >= 0.1:
+                self.game.soundfx_lvl -= .1
+                self.sample_snd.set_volume(self.game.soundfx_lvl)
+                self.sample_snd.play()
+            elif self.state == 'music' and self.game.music_lvl >= 0.1:
+                self.game.music_lvl -= .1
+                pg.mixer.music.set_volume(self.game.music_lvl)
+        elif self.game.RIGHT_KEY:
+            if self.state == 'soundfx' and self.game.soundfx_lvl < 1:
+                self.game.soundfx_lvl += .1
+                self.sample_snd.set_volume(self.game.soundfx_lvl)
+                self.sample_snd.play()
+            elif self.state == 'music' and self.game.music_lvl < 1:
+                self.game.music_lvl += .1
+                pg.mixer.music.set_volume(self.game.music_lvl)
+        self.game.reset_keys()
+
 
 class ControlsMenu(Menu):
     def __init__(self, game):
@@ -319,6 +414,7 @@ class ControlsMenu(Menu):
         self.change_weaponx, self.change_weapony = self.window_centerx, self.window_centery - text_offset
         self.place_minex, self.place_miney = self.window_centerx, self.window_centery
         self.pausex, self.pausey = self.window_centerx, self.window_centery + text_offset
+        self.toggle_fsx, self.toggle_fsy, self.window_centerx, self.window_centery + text_offset * 2
         self.backx, self.backy = self.window_centerx, self.window_centery + text_offset * 5
         self.cursor_rect.midtop = (self.backx + self.cursor_offsetx, self.backy + self.cursor_offsety)
 
@@ -337,6 +433,8 @@ class ControlsMenu(Menu):
             self.game.draw_text('Place landmine  ---  X', self.game.menu_font, 40, WHITE, self.place_minex,
                                 self.place_miney, 'center')
             self.game.draw_text('Pause --- P', self.game.menu_font, 40, WHITE, self.pausex, self.pausey, 'center')
+            self.game.draw_text('Toggle Fullscreen --- F4 - in-game only', self.game.menu_font, 40, WHITE, self.pausex,
+                                self.pausey, 'center')
             self.game.draw_text('Back', self.game.menu_font, 40, WHITE, self.backx, self.backy, 'center')
             self.draw_cursor()
             self.blit_screen()

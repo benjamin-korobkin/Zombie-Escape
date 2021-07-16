@@ -100,7 +100,8 @@ ITEM_IMAGES = {
     "shotgun": "shotgun.png",
     "pistol": "pistol.png",
     "uzi": "uzi.png",
-    "placed_mine": "landmine.png"
+    "placed_mine": "landmine.png",
+    "tower": "cell_tower.png"
 }
 
 GUN_IMAGES = {
@@ -153,9 +154,13 @@ WEAPON_SOUNDS = {
 }
 EFFECTS_SOUNDS = {
     'level_start': 'level_start.wav',
-    'health_up': 'health_pack.wav',
-    'gun_pickup': 'gun_pickup.wav'
-    # TODO: Add ammo pickup & explosion
+    'health_up': 'item_pickup.ogg',
+    'item_pickup': 'item_pickup.ogg',
+    'ammo_pickup': 'ammo_pickup.ogg',
+    'gun_pickup': 'gun_pickup.wav',
+    'explosion': 'short_explosion.ogg',
+    'place_mine1': 'drop_sound.wav',
+    'place_mine2': '1beep.mp3'
 }
 
 # Dict of level names

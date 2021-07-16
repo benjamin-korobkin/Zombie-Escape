@@ -14,6 +14,7 @@ from game import *
 
 # create the game object
 g = Game()
+
 while g.running:
     # g.show_menu_screen("PRESS ANY KEY TO BEGIN")
     lvl = g.curr_menu.display_menu()

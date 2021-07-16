@@ -38,6 +38,7 @@ class Game:
         self.display = pg.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
         self.screen = pg.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         pg.display.set_caption(TITLE)
+        self.fullscreen = False
         self.UP_KEY, self.DOWN_KEY, self.START_KEY, self.BACK_KEY, self.LEFT_KEY, \
             self.RIGHT_KEY = False, False, False, False, False, False
         self.clock = pg.time.Clock()
@@ -55,6 +56,12 @@ class Game:
         self.prev_menu = self.main_menu
         pg.mixer.music.play(loops=-1)
 
+    def toggle_fullscreen(self):
+        self.fullscreen = not self.fullscreen
+        if self.fullscreen:
+            self.screen = pg.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pg.FULLSCREEN)
+        else:
+            self.screen = pg.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
     def draw_text(self, text, font_name, size, color, x, y, align='nw'):
         font = pg.font.Font(font_name, size)
@@ -190,13 +197,10 @@ class Game:
         # initialize all variables and do all the setup for a new game
         self.load_level(LEVELS['tutorial'])
 
-    def contnue(self):
-        pass
-
     def load_level(self, level_name=LEVELS['tutorial'], stats=None):
         self.all_sprites = pg.sprite.LayeredUpdates()  # Group()
         self.walls = pg.sprite.Group()
-        self.bases = pg.sprite.Group()
+        self.towers = pg.sprite.Group()
         self.mobs = pg.sprite.Group()
         self.bullets = pg.sprite.Group()
         self.items = pg.sprite.Group()
@@ -223,6 +227,8 @@ class Game:
                 Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             elif tile_object.name == 'zombie':
                 Mob(self, obj_center.x, obj_center.y) # pass
+            elif tile_object.name == 'tower':
+                Tower(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             elif tile_object.name in ITEM_IMAGES.keys():
                 if tile_object.name == 'bonus':
                     ratio = (32, 32)
@@ -245,10 +251,7 @@ class Game:
                     ratio = (32, 32)
                 Item(self, obj_center, tile_object.name, ratio)
             elif tile_object.type == 'text':  # putting text in object name
-                #print(tile_object.name)
                 Text(self, tile_object.x, tile_object.y, tile_object.name)
-            elif tile_object.name == 'base':
-                Base(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
 
         self.camera = Camera(self.map.width, self.map.height)
         self.draw_debug = False
@@ -280,7 +283,7 @@ class Game:
             file.writelines(savedata)
             file.close()
         except:
-            print("Something happened")
+            print("Couldn't properly save.")
         finally:
             self.running, self.playing = False, False
             self.curr_menu.run_display = False
@@ -328,6 +331,8 @@ class Game:
             mob.vel = vec(0, 0)
         # Mobs touch mine
         hits = pg.sprite.groupcollide(self.mobs, self.landmines, False, True)
+        if hits:
+            self.effects_sounds['explosion'].play()
         for mob in hits:
             Explosion(self, mob.pos)
         # Mobs touch explosion
@@ -339,7 +344,7 @@ class Game:
         hits = pg.sprite.spritecollide(self.player, self.items, False)
         for hit in hits:  # TODO: Put sounds in an object instead of a dictionary
             if hit.type == 'health' and self.player.health < PLAYER_MAX_HEALTH:
-                # self.effects_sounds['health_up'].play()  # TODO: Find different sound
+                self.effects_sounds['health_up'].play()  # TODO: Find different sound
                 self.player.health = min(self.player.health + HEALTH_PICKUP_AMT, PLAYER_MAX_HEALTH)
                 hit.kill()
             elif hit.type == 'shotgun':
@@ -359,19 +364,23 @@ class Game:
             elif hit.type == 'pistol_ammo':
                 hit.kill()
                 self.player.stats['pistol_ammo'] += PISTOL_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
-                # TODO, get sound: self.effects_sounds['ammo_pickup'].play()
+                self.effects_sounds['ammo_pickup'].play()
             elif hit.type == 'shotgun_ammo':
                 hit.kill()
                 self.player.stats['shotgun_ammo'] += SHOTGUN_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
+                self.effects_sounds['ammo_pickup'].play()
             elif hit.type == 'uzi_ammo':
                 hit.kill()
                 self.player.stats['uzi_ammo'] += UZI_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
+                self.effects_sounds['ammo_pickup'].play()
             elif hit.type == 'landmine':
                 hit.kill()
                 self.player.stats['landmines'] += 1 + self.player.stats['ammo_bonus']
+                self.effects_sounds['ammo_pickup'].play()
             elif hit.type == 'comms':
                 hit.kill()
                 self.player.comms += 1
+                self.effects_sounds['item_pickup'].play()
 
         # Bullet touches BonusItem
         hits = pg.sprite.groupcollide(self.items, self.bullets, False, False)
@@ -381,7 +390,7 @@ class Game:
                 hit.activate(self.player)
                 self.player.stats['bonuses'] += 1
         # Check if we beat level (returned comms)
-        hits = pg.sprite.spritecollide(self.player, self.bases, False, False)
+        hits = pg.sprite.spritecollide(self.player, self.towers, False, collide_hit_rect)
         for hit in hits:
             if self.player.comms >= self.comms_req:
                 self.player.kill()
@@ -460,6 +469,8 @@ class Game:
                     self.player.change_weapon()
                 if event.key == pg.K_x:
                     self.player.place_mine()
+                if event.key == pg.K_F4:
+                    self.toggle_fullscreen()
 
     def menu_events(self):
         for event in pg.event.get():

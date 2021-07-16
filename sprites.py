@@ -178,6 +178,7 @@ class Player(pg.sprite.Sprite):
             pos = self.pos + vec(40, 0).rotate(-self.rot)
             Landmine(self.game, pos, LANDMINE_DAMAGE + self.stats['dmg_bonus'])
             self.stats['landmines'] -= 1
+            self.game.effects_sounds['place_mine1'].play()
 
 class Mob(pg.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -318,6 +319,15 @@ class Landmine(pg.sprite.Sprite):
         self.rect.center = self.pos
         self.targets = self.game.mobs
         self.damage = damage
+        self.last_update = pg.time.get_ticks()
+        self.beep_count = 3
+
+    def update(self):
+        now = pg.time.get_ticks()
+        if self.beep_count > 0 and now - self.last_update > 250:
+            self.last_update = now
+            self.game.effects_sounds['place_mine2'].play()
+            self.beep_count -= 1
 
 class Explosion(pg.sprite.Sprite):
     def __init__(self, game, pos):
@@ -381,18 +391,6 @@ class Obstacle(pg.sprite.Sprite):
     def __init__(self, game, x, y, w, h):
         self._layer = WALL_LAYER
         self.groups = game.walls
-        pg.sprite.Sprite.__init__(self, self.groups)
-        self.game = game
-        self.rect = pg.Rect(x, y, w, h)
-        self.x = x
-        self.y = y
-        self.rect.x = x
-        self.rect.y = y
-
-class Base(pg.sprite.Sprite):
-    def __init__(self, game, x, y, w, h):
-        self._layer = WALL_LAYER
-        self.groups = game.bases
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.rect = pg.Rect(x, y, w, h)
@@ -475,6 +473,13 @@ class BonusItem(Item):
             plyr.stats['accuracy_bonus'] += 4
             txt = "ACCURACY BONUS!"
         Text(self.game, self.pos.x, self.pos.y, txt, 24)
+
+class Tower(Obstacle):
+    def __init__(self, game, x, y, w, h):
+        Obstacle.__init__(self, game, x, y, w, h)
+        self.groups = game.all_sprites, game.towers, game.walls
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.image = pg.transform.scale(game.item_images['tower'], (int(w), int(h)))
 
 class Text(pg.sprite.Sprite):
     def __init__(self, game, x, y, text, font_size=32):
