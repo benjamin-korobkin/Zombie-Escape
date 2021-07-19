@@ -52,6 +52,7 @@ class Game:
         self.credits_menu = CreditsMenu(self)
         self.volume_menu = VolumeMenu(self)
         self.controls_menu = ControlsMenu(self)
+        self.pause_menu = PauseMenu(self)
         self.curr_menu = self.main_menu
         self.prev_menu = self.main_menu
         pg.mixer.music.play(loops=-1)
@@ -271,17 +272,21 @@ class Game:
         while self.playing:
             self.dt = self.clock.tick(FPS) / 1000
             self.events()
-            if not self.paused:
+            if self.paused:
+                self.pause_menu.display_menu()
+            else:
                 self.update()
             self.draw()
             #self.reset_keys()
 
     def quit(self):
         try:
-            savedata = [self.current_lvl]
-            file = open('savefile.txt', 'w')
-            file.writelines(savedata)
-            file.close()
+            with open('savefile.txt', 'w') as f:
+                for stat in self.player.stats.values():
+                    f.write(str(stat))
+                    f.write('\n')
+                savedata = self.current_lvl
+                f.write(savedata)
         except:
             print("Couldn't properly save.")
         finally:
@@ -350,32 +355,32 @@ class Game:
             elif hit.type == 'shotgun':
                 hit.kill()
                 self.effects_sounds['gun_pickup'].play()
-                self.player.stats['weapons'].append('shotgun')
+                self.player.weapons.append('shotgun')
                 self.player.weapon_selection += 1
                 self.player.curr_weapon = 'shotgun'
-                self.player.stats['shotgun_ammo'] += SHOTGUN_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
+                self.player.ammo['shotgun_ammo'] += SHOTGUN_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
             elif hit.type == 'uzi':
                 hit.kill()
                 self.effects_sounds['gun_pickup'].play()
-                self.player.stats['weapons'].append('uzi')
+                self.player.weapons.append('uzi')
                 self.player.weapon_selection += 1
                 self.player.curr_weapon = 'uzi'
-                self.player.stats['uzi_ammo'] += UZI_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
+                self.player.ammo['uzi_ammo'] += UZI_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
             elif hit.type == 'pistol_ammo':
                 hit.kill()
-                self.player.stats['pistol_ammo'] += PISTOL_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
+                self.player.ammo['pistol_ammo'] += PISTOL_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
                 self.effects_sounds['ammo_pickup'].play()
             elif hit.type == 'shotgun_ammo':
                 hit.kill()
-                self.player.stats['shotgun_ammo'] += SHOTGUN_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
+                self.player.ammo['shotgun_ammo'] += SHOTGUN_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
                 self.effects_sounds['ammo_pickup'].play()
             elif hit.type == 'uzi_ammo':
                 hit.kill()
-                self.player.stats['uzi_ammo'] += UZI_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
+                self.player.ammo['uzi_ammo'] += UZI_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
                 self.effects_sounds['ammo_pickup'].play()
             elif hit.type == 'landmine':
                 hit.kill()
-                self.player.stats['landmines'] += 1 + self.player.stats['ammo_bonus']
+                self.player.ammo['landmines'] += 1 + self.player.stats['ammo_bonus']
                 self.effects_sounds['ammo_pickup'].play()
             elif hit.type == 'comms':
                 hit.kill()
@@ -390,7 +395,7 @@ class Game:
                 hit.activate(self.player)
                 self.player.stats['bonuses'] += 1
         # Check if we beat level (returned comms)
-        hits = pg.sprite.spritecollide(self.player, self.towers, False, collide_hit_rect)
+        hits = pg.sprite.spritecollide(self.player, self.towers, False, False)
         for hit in hits:
             if self.player.comms >= self.comms_req:
                 self.player.kill()
@@ -446,10 +451,6 @@ class Game:
         self.draw_text('ZOMBIES - {}'.format(len(self.mobs)), self.hud_font, 30, WHITE,
                        WINDOW_WIDTH - 10, 10, align='ne')
 
-        if self.paused:
-            self.screen.blit(self.dim_screen, (0, 0))  # top left of rect position
-            self.draw_text("PAUSED", self.title_font, 128, RED, WINDOW_WIDTH / 2,
-                           WINDOW_HEIGHT / 2, align="center")
         pg.display.flip()
 
     def events(self):
@@ -495,7 +496,6 @@ class Game:
             self.RIGHT_KEY = False, False, False, False, False, False
 
     def show_menu_screen(self, txt):
-        self.paused = True
         self.screen.fill(BLACK)
         self.draw_text(txt, self.menu_font, 48, RED,
                        WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, align="center")

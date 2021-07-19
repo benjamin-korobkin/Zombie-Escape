@@ -59,25 +59,25 @@ class Player(pg.sprite.Sprite):
         self.is_damaged = False
         self.comms = 0
         self.weapon_selection = 0
+        self.weapons = ['pistol']
+        self.ammo = {
+            'pistol_ammo': 0,
+            'shotgun_ammo': 0,
+            'uzi_ammo': 0,
+            'landmines': 0
+        }
         if stats:
             self.stats = stats
         else:
             self.stats = {
-                'weapons': ['pistol'],
-                'weapon_selection': 0,
-                'pistol_ammo': 0,
-                'shotgun_ammo': 0,
-                'uzi_ammo': 0,
-                'landmines': 0,
                 'accuracy_bonus': 0,
                 'fire_rate_bonus': 0,
                 'ammo_bonus': 0,
                 'dmg_bonus': 0,
                 'speed_bonus': 0,
-                'resistance_bonus': 0,
-                'bonuses': 0,
+                'bonuses': 0
             }
-        self.curr_weapon = self.stats['weapons'][self.weapon_selection]
+        self.curr_weapon = self.weapons[self.weapon_selection]
 
     def got_hit(self):
         self.is_damaged = True
@@ -149,35 +149,34 @@ class Player(pg.sprite.Sprite):
 
     def change_weapon(self):
         self.weapon_selection += 1
-        if self.weapon_selection >= len(self.stats['weapons']):
+        if self.weapon_selection >= len(self.weapons):
             self.weapon_selection = 0
-        self.curr_weapon = self.stats['weapons'][self.weapon_selection]
-        # print("switched to ", self.curr_weapon) # TODO: display weapon name
+        self.curr_weapon = self.weapons[self.weapon_selection]
 
     def get_ammo(self, weapon):
         curr_weapon = self.curr_weapon
         if curr_weapon == 'pistol':
-            return self.stats['pistol_ammo']
+            return self.ammo['pistol_ammo']
         elif curr_weapon == 'shotgun':
-            return self.stats['shotgun_ammo']
+            return self.ammo['shotgun_ammo']
         elif curr_weapon == 'uzi':
-            return self.stats['uzi_ammo']
+            return self.ammo['uzi_ammo']
 
     def reduce_ammo(self, weapon):
         curr_weapon = self.curr_weapon
         if curr_weapon == 'pistol':
-            self.stats['pistol_ammo'] -= 1
+            self.ammo['pistol_ammo'] -= 1
         elif curr_weapon == 'shotgun':
-            self.stats['shotgun_ammo'] -= 1
+            self.ammo['shotgun_ammo'] -= 1
         elif curr_weapon == 'uzi':
-            self.stats['uzi_ammo'] -= 1
+            self.ammo['uzi_ammo'] -= 1
 
     def place_mine(self):
-        if self.stats['landmines'] >= 1:
+        if self.ammo['landmines'] >= 1:
             # spawn mine in front of player. Not under.
             pos = self.pos + vec(40, 0).rotate(-self.rot)
             Landmine(self.game, pos, LANDMINE_DAMAGE + self.stats['dmg_bonus'])
-            self.stats['landmines'] -= 1
+            self.ammo['landmines'] -= 1
             self.game.effects_sounds['place_mine1'].play()
 
 class Mob(pg.sprite.Sprite):
