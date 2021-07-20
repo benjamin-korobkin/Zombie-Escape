@@ -68,6 +68,7 @@ class Player(pg.sprite.Sprite):
         }
         if stats:
             self.stats = stats
+            print(stats)
         else:
             self.stats = {
                 'accuracy_bonus': 0,
@@ -457,7 +458,7 @@ class BonusItem(Item):
     def activate(self, plyr):
         txt = ""
         if plyr.stats['bonuses'] % 5 == 0:
-            plyr.stats['speed_bonus'] += 25
+            plyr.stats['speed_bonus'] += 10
             txt = "SPEED BONUS!"
         elif plyr.stats['bonuses'] % 4 == 0:
             plyr.stats['dmg_bonus'] += 2

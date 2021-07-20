@@ -5,10 +5,8 @@ from settings import *
 from tilemap import *
 from sprites import *
 from menu import *
+from enum import Enum
 
-# MAJOR FIX NEEDED FOR FILE STRUCTURING RELATED TO MAPS
-# Pygame keeps complaining about not finding certain files related to our map/tiles
-# FIXED, see tilemap::render. They keep changing to black boxes when other things drawn over them. Same with blood splats
 
 def draw_health(surface, x, y, health_pct):
     if health_pct < 0:
@@ -25,9 +23,10 @@ def draw_health(surface, x, y, health_pct):
     pg.draw.rect(surface, col, fill_rect)
     pg.draw.rect(surface, WHITE, outline_rect, 2)
 
+
 class Game:
     def __init__(self):
-        pg.mixer.pre_init(22050, -16, 2, 1024) # change last value to increase buffer size to load
+        pg.mixer.pre_init(22050, -16, 2, 1024)  # change last value to increase buffer size to load
         # sounds properly before playing them. Must be power of 2 (512, 1024, 2048, etc.
         pg.init()
         pg.mixer.quit()
@@ -40,7 +39,7 @@ class Game:
         pg.display.set_caption(TITLE)
         self.fullscreen = False
         self.UP_KEY, self.DOWN_KEY, self.START_KEY, self.BACK_KEY, self.LEFT_KEY, \
-            self.RIGHT_KEY = False, False, False, False, False, False
+        self.RIGHT_KEY = False, False, False, False, False, False
         self.clock = pg.time.Clock()
         pg.key.set_repeat(500, 100)  # Allows you to hold down a key
         self.all_sounds = []
@@ -56,6 +55,7 @@ class Game:
         self.curr_menu = self.main_menu
         self.prev_menu = self.main_menu
         pg.mixer.music.play(loops=-1)
+        self.level_complete = False
 
     def toggle_fullscreen(self):
         self.fullscreen = not self.fullscreen
@@ -90,11 +90,11 @@ class Game:
 
     def load_data(self):
         self.game_folder = path.dirname(__file__)  # Where our game is running from
-        img_folder = path.join(self.game_folder, 'img')
+        self.img_folder = path.join(self.game_folder, 'img')
         self.sound_folder = path.join(self.game_folder, 'snd')
         self.music_folder = path.join(self.game_folder, 'music')
         self.map_folder = path.join(self.game_folder, 'maps')
-        self.explosion_sheet = pg.image.load(path.join(img_folder, 'explosion.png')).convert_alpha()
+        self.explosion_sheet = pg.image.load(path.join(self.img_folder, 'explosion.png')).convert_alpha()
         self.explosion_frames = []
         EXPL_WIDTH = 130
         EXPL_HEIGHT = 130
@@ -111,19 +111,18 @@ class Game:
             x = 0
             y += EXPL_HEIGHT
 
-        self.title_font = path.join(img_folder, 'DemonSker-zyzD.ttf')  # TTF = True Type Font
-        self.menu_font = path.join(img_folder, 'DemonSker-zyzD.ttf')  # TODO: Experiment
-        self.hud_font = path.join(img_folder, 'DemonSker-zyzD.ttf')
+        self.title_font = path.join(self.img_folder, 'DemonSker-zyzD.ttf')  # TTF = True Type Font
+        self.menu_font = path.join(self.img_folder, 'DemonSker-zyzD.ttf')  # TODO: Experiment
+        self.hud_font = path.join(self.img_folder, 'DemonSker-zyzD.ttf')
         self.dim_screen = pg.Surface(self.screen.get_size()).convert_alpha()
         self.dim_screen.fill((0, 0, 0, 180))  # BLACK with 180 transparency
-        self.player_img = pg.image.load(path.join(img_folder, PLAYER_IMG)).convert_alpha()  # Surface
-        self.wall_img = pg.image.load(path.join(img_folder, WALL_IMG)).convert_alpha()  # Surface
+        self.wall_img = pg.image.load(path.join(self.img_folder, WALL_IMG)).convert_alpha()  # Surface
         self.wall_img = pg.transform.scale(self.wall_img, (TILESIZE, TILESIZE))  # can scale image
-        self.mob_img = pg.image.load(path.join(img_folder, MOB_IMG)).convert_alpha()  # Surface
+        self.mob_img = pg.image.load(path.join(self.img_folder, MOB_IMG)).convert_alpha()  # Surface
         # pg.draw.circle(surface, color, center, radius)  # Each image is a Surface
         self.gun_images = {}
         for gun in GUN_IMAGES:
-            gun_img = (pg.image.load(path.join(img_folder, GUN_IMAGES[gun])).convert_alpha())
+            gun_img = (pg.image.load(path.join(self.img_folder, GUN_IMAGES[gun])).convert_alpha())
             gun_img = pg.transform.scale(gun_img, (32, 32))
             self.gun_images[gun] = gun_img
 
@@ -136,15 +135,15 @@ class Game:
         self.bullet_images['uzi'] = self.uzi_bullet_img
         self.gun_flashes = []
         for img in MUZZLE_FLASHES:
-            self.gun_flashes.append(pg.image.load(path.join(img_folder, img)).convert_alpha())
+            self.gun_flashes.append(pg.image.load(path.join(self.img_folder, img)).convert_alpha())
 
         self.item_images = {}
         for item in ITEM_IMAGES:
-            self.item_images[item] = (pg.image.load(path.join(img_folder, ITEM_IMAGES[item])).convert_alpha())
+            self.item_images[item] = (pg.image.load(path.join(self.img_folder, ITEM_IMAGES[item])).convert_alpha())
 
         self.splat_images = []
         for img in SPLAT_IMAGES:
-            i = pg.image.load(path.join(img_folder, img)).convert_alpha()
+            i = pg.image.load(path.join(self.img_folder, img)).convert_alpha()
             i.set_colorkey(BLACK)
             i = pg.transform.scale(i, (64, 64))
             self.splat_images.append(i)
@@ -152,7 +151,7 @@ class Game:
         # lighting effect
         self.fog = pg.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
         self.fog.fill(NIGHT_COLOR)
-        self.light_mask = pg.image.load(path.join(img_folder, LIGHT_MASK)).convert_alpha()
+        self.light_mask = pg.image.load(path.join(self.img_folder, LIGHT_MASK)).convert_alpha()
         self.light_mask = pg.transform.scale(self.light_mask, LIGHT_RADIUS)
         self.light_rect = self.light_mask.get_rect()
 
@@ -180,7 +179,6 @@ class Game:
             self.player_hit_sounds.append(s)
             self.all_sounds.append(s)
 
-
         self.zombie_moan_sounds = []
         for snd in ZOMBIE_MOAN_SOUNDS:
             s = pg.mixer.Sound(path.join(self.sound_folder, snd))
@@ -194,11 +192,7 @@ class Game:
             self.zombie_death_sounds.append(s)
             self.all_sounds.append(s)
 
-    def new(self):
-        # initialize all variables and do all the setup for a new game
-        self.load_level(LEVELS['tutorial'])
-
-    def load_level(self, level_name=LEVELS['tutorial'], stats=None):
+    def load_level(self, level_name='tutorial.tmx', stats=None):
         self.all_sprites = pg.sprite.LayeredUpdates()  # Group()
         self.walls = pg.sprite.Group()
         self.towers = pg.sprite.Group()
@@ -209,6 +203,9 @@ class Game:
         self.explosions = pg.sprite.Group()
         # Grab our game layout file (map)
         self.current_lvl = level_name
+        self.player_img = pg.image.load(path.join(self.img_folder, LEVELS[self.current_lvl]['plyr'])).convert_alpha()  # Surface
+        self.objective = LEVELS[self.current_lvl]['objective']
+        self.story = LEVELS[self.current_lvl]['story']
         self.map = TiledMap(path.join(self.map_folder, level_name))
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
@@ -227,7 +224,7 @@ class Game:
             elif tile_object.name == 'wall':
                 Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             elif tile_object.name == 'zombie':
-                Mob(self, obj_center.x, obj_center.y) # pass
+                Mob(self, obj_center.x, obj_center.y)  # pass
             elif tile_object.name == 'tower':
                 Tower(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             elif tile_object.name in ITEM_IMAGES.keys():
@@ -260,6 +257,7 @@ class Game:
         self.music_off = False  # placeholders for future option to turn off/on music/sounds
         self.sound_off = False
         self.is_night = False
+        self.show_story_screen(LEVELS[self.current_lvl]['story'])
         self.effects_sounds['level_start'].play()
 
     def game_loop(self):
@@ -277,7 +275,7 @@ class Game:
             else:
                 self.update()
             self.draw()
-            #self.reset_keys()
+            # self.reset_keys()
 
     def quit(self):
         try:
@@ -394,16 +392,23 @@ class Game:
                 hit.kill()
                 hit.activate(self.player)
                 self.player.stats['bonuses'] += 1
-        # Check if we beat level (returned comms)
-        hits = pg.sprite.spritecollide(self.player, self.towers, False, False)
-        for hit in hits:
-            if self.player.comms >= self.comms_req:
-                self.player.kill()
-                if self.current_lvl == LEVELS['tutorial']:
-                    self.show_menu_screen("TUTORIAL COMPLETE --- PRESS ANY KEY TO CONTINUE")
-                    self.load_level(LEVELS['level1'], self.player.stats)
-                elif self.current_lvl == LEVELS['level1']:
-                    self.playing = False
+        # Check if we beat brought comms to tower
+        if self.objective == 'return_comms':
+            hits = pg.sprite.spritecollide(self.player, self.towers, False, False)
+            for hit in hits:
+                if self.player.comms >= self.comms_req:
+                    self.level_complete = True
+        elif self.objective == 'kill_all_zombies':
+            if len(self.mobs) == 0:
+                self.level_complete = True
+
+        if self.level_complete:
+            self.player.kill()
+            self.level_complete = False
+            if self.current_lvl == 'tutorial.tmx':
+                self.load_level('level1.tmx', self.player.stats)
+            elif self.current_lvl == 'level1.tmx':
+                self.playing = False
 
     def draw_grid(self):
         for x in range(0, WINDOW_WIDTH, TILESIZE):
@@ -493,12 +498,17 @@ class Game:
 
     def reset_keys(self):
         self.START_KEY, self.BACK_KEY, self.UP_KEY, self.DOWN_KEY, self.LEFT_KEY, \
-            self.RIGHT_KEY = False, False, False, False, False, False
+        self.RIGHT_KEY = False, False, False, False, False, False
 
-    def show_menu_screen(self, txt):
+    def show_story_screen(self, txt):
         self.screen.fill(BLACK)
-        self.draw_text(txt, self.menu_font, 48, RED,
-                       WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, align="center")
+        txt_height = 125
+        for line in txt:
+            self.draw_text(line, self.menu_font, 34, LIGHTGREY, 40, txt_height, align="w")
+            txt_height += 80
+        if self.current_lvl == 'tutorial.tmx':
+            self.draw_text('PRESS ANY KEY TO CONTINUE', self.menu_font, 36, RED, WINDOW_WIDTH / 2, txt_height + 50,
+                           align="center")
         pg.display.flip()
         self.wait_for_key()
 
@@ -506,8 +516,8 @@ class Game:
         self.screen.fill(BLACK)
         self.draw_text("GAME OVER", self.title_font, 120, RED,
                        WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, align="center")
-        self.draw_text("PRESS ANY KEY TO BEGIN", self.title_font, 48, WHITE,
-                       WINDOW_WIDTH / 2, WINDOW_HEIGHT * 3/4, align="center")
+        self.draw_text("PRESS ANY KEY TO CONTINUE", self.title_font, 48, WHITE,
+                       WINDOW_WIDTH / 2, WINDOW_HEIGHT * 3 / 4, align="center")
         pg.display.flip()
         self.wait_for_key()
 

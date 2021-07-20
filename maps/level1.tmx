@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="50" height="30" tilewidth="64" tileheight="64" infinite="0" nextlayerid="6" nextobjectid="57">
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="50" height="30" tilewidth="64" tileheight="64" infinite="0" nextlayerid="6" nextobjectid="78">
  <tileset firstgid="1" source="Kenney Topdown Shooter Pack.tsx"/>
  <layer id="1" name="ground" width="50" height="30">
   <data encoding="csv">
@@ -64,9 +64,9 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,309,0,0,0,0,0,309,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,309,0,0,0,0,0,309,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,309,0,0,0,0,0,309,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,309,0,0,0,0,0,309,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,309,0,0,0,0,0,309,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,307,282,282,282,282,282,308,0,0,0,0
+466,466,466,440,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,309,0,0,0,0,0,309,0,0,0,0,
+0,0,0,440,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,309,0,0,0,0,0,309,0,0,0,0,
+0,0,0,440,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,307,282,282,282,282,282,308,0,0,0,0
 </data>
  </layer>
  <layer id="5" name="objects" width="50" height="30">
@@ -109,7 +109,7 @@
   <object id="10" name="wall" x="256" y="0" width="64" height="704"/>
   <object id="13" name="wall" x="704" y="0" width="64" height="704"/>
   <object id="14" name="wall" x="320" y="0" width="384" height="64"/>
-  <object id="16" name="player" x="496" y="208" width="32" height="32"/>
+  <object id="16" name="player" x="480" y="224" width="32" height="32"/>
   <object id="17" name="wall" x="912" y="512" width="32" height="960"/>
   <object id="18" name="wall" x="2256" y="512" width="32" height="960"/>
   <object id="19" name="wall" x="2496" y="1216" width="64" height="704"/>
@@ -137,7 +137,6 @@
   <object id="43" name="wall" x="640" y="768" width="64" height="64"/>
   <object id="44" name="wall" x="704" y="704" width="64" height="48"/>
   <object id="45" name="health" x="592" y="272" width="32" height="32"/>
-  <object id="46" name="shotgun" x="208" y="720" width="32" height="32"/>
   <object id="48" name="wall" x="704" y="768" width="64" height="64"/>
   <object id="49" name="wall" x="448" y="768" width="64" height="64">
    <ellipse/>
@@ -146,7 +145,27 @@
    <ellipse/>
   </object>
   <object id="54" name="wall" x="384" y="768" width="64" height="64"/>
-  <object id="55" name="comms" x="256" y="832" width="32" height="32"/>
-  <object id="56" name="tower" x="320" y="64" width="64" height="64"/>
+  <object id="57" name="KILL ALL ZOMBIES!!!" type="text" x="512" y="80" width="160.186" height="30.6063" rotation="0.711712">
+   <text wrap="1">KILL ALL ZOMBIES!!!</text>
+  </object>
+  <object id="58" name="shotgun" x="384" y="544" width="32" height="32"/>
+  <object id="59" name="uzi" x="608" y="544" width="32" height="32"/>
+  <object id="60" name="shotgun_ammo" x="16" y="80" width="32" height="32"/>
+  <object id="61" name="uzi_ammo" x="1248" y="64" width="32" height="32"/>
+  <object id="62" name="shotgun_ammo" x="1904" y="80" width="32" height="32"/>
+  <object id="63" name="uzi_ammo" x="3088" y="80" width="32" height="32"/>
+  <object id="64" name="shotgun_ammo" x="3136" y="1808" width="32" height="32"/>
+  <object id="65" name="pistol_ammo" x="176" y="1104" width="32" height="32"/>
+  <object id="66" name="bonus" type="x" x="160" y="1872" width="32" height="32"/>
+  <object id="67" name="wall" x="224" y="1728" width="32" height="192"/>
+  <object id="68" name="wall" x="0" y="1728" width="192" height="32"/>
+  <object id="70" name="pistol_ammo" x="832" y="1504" width="32" height="32"/>
+  <object id="71" name="landmine" x="1792" y="1168" width="32" height="32"/>
+  <object id="72" name="landmine" x="2704" y="560" width="32" height="32"/>
+  <object id="73" name="pistol_ammo" x="2320" y="1808" width="32" height="32"/>
+  <object id="74" name="uzi_ammo" x="2992" y="112" width="32" height="32"/>
+  <object id="75" name="uzi_ammo" x="2704" y="1040" width="32" height="32"/>
+  <object id="76" name="uzi_ammo" x="2784" y="1056" width="32" height="32"/>
+  <object id="77" name="shotgun_ammo" x="2912" y="976" width="32" height="32"/>
  </objectgroup>
 </map>

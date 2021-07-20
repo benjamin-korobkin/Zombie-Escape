@@ -23,7 +23,7 @@ class MainMenu(Menu):
         text_offset = 60
         self.show_continue = False
         self.initial_state = 'new game'
-        self.curr_lvl = LEVELS['tutorial']
+        self.curr_lvl = 'tutorial.tmx'
         self.curr_stats = {
             'accuracy_bonus': 0,
             'fire_rate_bonus': 0,
@@ -33,16 +33,19 @@ class MainMenu(Menu):
             'bonuses': 0
         }
         try:
+            temp_stats = self.curr_stats
             with open('savefile.txt', 'r') as f:
                 for stat in self.curr_stats:
-                    self.curr_stats[stat] = int(f.readline())
+                    temp_stats[stat] = int(f.readline())
                 lvl = f.readline()
-                if not lvl == LEVELS['tutorial']:
+                if not lvl == 'tutorial.tmx':
                     self.show_continue = True
                     self.initial_state = 'continue'
                     self.curr_lvl = lvl
+                    for stat in temp_stats:
+                        self.curr_stats[stat]
         except:
-            pass
+            print("Trouble reading the save file in menu.py")
 
         self.state = self.initial_state
         self.continuex, self.continuey = self.window_centerx, self.window_centery - text_offset
@@ -128,7 +131,7 @@ class MainMenu(Menu):
             if self.state == 'continue':
                 self.game.playing = True
             if self.state == 'new game':
-                self.curr_lvl = LEVELS['tutorial']
+                self.curr_lvl = 'tutorial.tmx'
                 self.game.playing = True
             elif self.state == 'options':
                 self.game.curr_menu = self.game.options_menu

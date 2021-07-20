@@ -1,4 +1,5 @@
 import pygame as pg
+
 vec = pg.math.Vector2
 
 # define some colors (R, G, B)
@@ -14,7 +15,7 @@ FONT_NAME = 'arial'
 
 # game settings
 # Ensure no partial squares with these values
-WINDOW_WIDTH = 1024   # 16 * 64 or 32 * 32 or 64 * 16
+WINDOW_WIDTH = 1024  # 16 * 64 or 32 * 32 or 64 * 16
 WINDOW_HEIGHT = 768  # 16 * 48 or 32 * 24 or 64 * 12
 FPS = 60
 TITLE = "Zombie Top-down Shooter"
@@ -29,9 +30,10 @@ WALL_IMG = 'tile_179.png'
 
 # Player settings
 PLAYER_MAX_HEALTH = 100
-PLAYER_SPEED = 500  # TODO: Reduce in final game
+PLAYER_SPEED = 260  # TODO: Reduce in final game
 PLAYER_ROT_SPEED = 250  # degrees per second
-PLAYER_IMG = 'manBlue_gun.png'
+PLAYER1_IMG = 'manBlue_gun.png'
+PLAYER2_IMG = 'hitman_gun.png'
 PLAYER_HIT_RECT = pg.Rect(0, 0, 35, 35)  # needs to be Rect to get center (not Surface)
 # By default, player facing right, so offset the bullet 30 to the right (x) and 10 down (y)
 BARREL_OFFSET = vec(30, 10)
@@ -45,7 +47,7 @@ WEAPONS = {}
 WEAPONS['pistol'] = {
     'bullet_speed': 750,
     'bullet_lifetime': 1250,
-    'fire_rate': 250,  # todo: Increase in final game
+    'fire_rate': 350,  # todo: Increase in final game
     'kickback': 200,
     'bullet_spread': 6,
     'damage': 10,
@@ -56,7 +58,7 @@ WEAPONS['pistol'] = {
 WEAPONS['shotgun'] = {
     'bullet_speed': 500,
     'bullet_lifetime': 500,
-    'fire_rate': 900,
+    'fire_rate': 1000,
     'kickback': 500,
     'bullet_spread': 24,
     'damage': 5,
@@ -66,7 +68,7 @@ WEAPONS['shotgun'] = {
 WEAPONS['uzi'] = {
     'bullet_speed': 1000,
     'bullet_lifetime': 750,
-    'fire_rate': 100,
+    'fire_rate': 175,
     'kickback': 300,
     'bullet_spread': 16,
     'damage': 4,
@@ -81,7 +83,7 @@ LANDMINE_KNOCKBACK = 50
 
 # Mob settings
 MOB_IMG = 'zoimbie1_hold.png'
-MOB_SPEEDS = [120, 135, 150, 160]
+MOB_SPEEDS = [135, 150, 160, 175]
 MOB_HIT_RECT = pg.Rect(0, 0, 30, 30)
 MOB_DAMAGE = 10
 MOB_KNOCKBACK = 25
@@ -163,8 +165,28 @@ EFFECTS_SOUNDS = {
     'place_mine2': '1beep.mp3'
 }
 
-# Dict of level names
+STORIES = {
+    'tutorial': ["Been a while since I came out of hiding.",
+                 "Supplies are running low and I don't know how much longer "
+                 "things can last.", "There's a tower here I can use to communicate with other survivors.",
+                 "I just need to find a device for communication.", "Well, won't do any good to just to sit here.",
+                 "I'll have to fight my way out and pray that I can reach the tower alive."],
+
+    'level1': ["Received a distress call.", "Didn't come with much info. Likely a lone survivor.", "Unlikely"
+               " chances they'll survive.", "Still, it's a good excuse to clear the local area of zombies.",
+               "Been waiting to bring out the big guns.", "Time to go to work >"]
+}
+
 LEVELS = {
-    'tutorial': 'tutorial.tmx',
-    'level1': 'level1.tmx'
+    'tutorial.tmx': {
+        'objective': 'return_comms',
+        'plyr': PLAYER1_IMG,
+        'story': STORIES['tutorial']
+    },
+
+    'level1.tmx': {
+        'objective': 'kill_all_zombies',
+        'plyr': PLAYER2_IMG,
+        'story': STORIES['level1']
+    }
 }
