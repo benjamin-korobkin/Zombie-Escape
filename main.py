@@ -1,14 +1,14 @@
 # KidsCanCode - Game Development with Pygame video series
 # Tile-based game
 # Video link: https://youtu.be/3UxnelT9aCo
-# Credit to Kenney for Game Art
-# Credit to Eric Matyas for Music
+# Music by Eric Matyas
 # Weapon icons from Flaticon (attribution required)
-# (Credit creator of icons.svg, opengameart) qubodup
+# icons.svg from opengameart, qubodup
 # landmine by Icons8
 # "topdown shooter" art by Kenny.nl
 # Weapon pickup by: Guns by Gary <http://fossilrecords.net/> licensed under CC-BY-SA 3.0 <http://creativecommons.org/licenses/by-sa/3.0/>
 # "espionage.ogg" by http://opengameart.org/users/haeldb
+# Sound effects from freesound.org: KlawyKogut, 
 
 from game import *
 

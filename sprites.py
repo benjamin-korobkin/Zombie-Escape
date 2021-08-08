@@ -132,21 +132,26 @@ class Player(pg.sprite.Sprite):
         curr_weapon = WEAPONS[self.curr_weapon]
         bullet_usage = curr_weapon['bullet_usage']
         curr_ammo = self.get_ammo(curr_weapon)
-        if curr_ammo >= bullet_usage and now - self.last_shot > curr_weapon['fire_rate'] - self.stats['fire_rate_bonus']:  # TODO: else play empty gun sound
-            snd = choice(self.game.weapon_sounds[self.curr_weapon])
-            snd.play()
-            self.last_shot = now
-            dir = vec(1, 0).rotate(-self.rot)
-            pos = self.pos + BARREL_OFFSET.rotate(-self.rot)
-            self.vel -= vec(curr_weapon['kickback'], 0).rotate(-self.rot)
-            # Interesting code to synchronize sounds, but won't be using it.
-            #if snd.get_num_channels() > 2:
-            #    snd.stop()
-            MuzzleFlash(self.game, pos)
-            self.reduce_ammo(curr_weapon)
-            for i in range(curr_weapon['bullet_count']):
-                spread = uniform(min(-curr_weapon['bullet_spread'] + self.stats['accuracy_bonus'], 0), curr_weapon['bullet_spread'])
-                Bullet(self.game, pos, dir.rotate(spread), curr_weapon['damage'] + self.stats['dmg_bonus'])
+        snd = choice(self.game.weapon_sounds[self.curr_weapon])
+        if now - self.last_shot > curr_weapon['fire_rate'] - self.stats['fire_rate_bonus']:
+            if curr_ammo >= bullet_usage:
+                snd.play()
+                self.last_shot = now
+                dir = vec(1, 0).rotate(-self.rot)
+                pos = self.pos + BARREL_OFFSET.rotate(-self.rot)
+                self.vel -= vec(curr_weapon['kickback'], 0).rotate(-self.rot)
+                MuzzleFlash(self.game, pos)
+                self.reduce_ammo(curr_weapon)
+                for i in range(curr_weapon['bullet_count']):
+                    spread = uniform(min(-curr_weapon['bullet_spread'] + self.stats['accuracy_bonus'], 0), curr_weapon['bullet_spread'])
+                    Bullet(self.game, pos, dir.rotate(spread), curr_weapon['damage'] + self.stats['dmg_bonus'])
+            else:
+                self.last_shot = now
+                snd = self.game.weapon_sounds['empty'][0]
+                snd.play()
+        # Interesting code to synchronize sounds, may use it.
+        if snd.get_num_channels() > 2:
+            snd.stop()
 
     def change_weapon(self):
         self.weapon_selection += 1
@@ -202,6 +207,7 @@ class Mob(pg.sprite.Sprite):
         self.speed = choice(MOB_SPEEDS)
         self.target = self.game.player
         self.is_chasing = False
+        self.avoid_rad = MOB_AVOID_RADIUS
 
     def draw_health(self):
         hp_percent = self.health / self.max_health
@@ -217,15 +223,17 @@ class Mob(pg.sprite.Sprite):
         if self.health < self.max_health:
             pg.draw.rect(self.image, col, self.health_bar)
 
-
     def avoid_mobs(self):
         for mob in self.game.mobs:
             if mob != self:
                 # calculate distance between self's vector and other mobs' vec
                 dist = self.pos - mob.pos
-                if 0 < dist.length() < MOB_AVOID_RADIUS:
+                if 0 < dist.length() < self.avoid_rad:
                     # normalize() returns a vector with same dir but length 1
                     self.acc += dist.normalize()  # TODO: learn how vectors work
+
+    def rotate(self):
+        self.image = pg.transform.rotate(self.game.mob_img, self.rot)
 
     def update(self):
         if self.health <= 0:
@@ -236,10 +244,9 @@ class Mob(pg.sprite.Sprite):
             pg.display.flip()
         else:
             target_dist = self.target.pos - self.pos
-            # Prevent bug where health bar is not drawn properly
-            self.image = pg.transform.rotate(self.game.mob_img, self.rot)
+            self.rotate()
             # See note at end of method regarding this line
-            # alert mob if shot was fired near it
+            # Also, alert mob if shot was fired near it
             if not self.is_chasing and target_dist.length_squared() < MOB_DETECT_RADIUS ** 2:
                 self.is_chasing = True
 
@@ -268,6 +275,18 @@ class Mob(pg.sprite.Sprite):
             This means getting the square root, which is an expensive operation. sqrt(x**2 + y**2) We save time
             by comparing the squared values instead"""
             # if target_dist.length() < MOB_DETECT_RADIUS:
+
+class Runner(Mob):
+    def __init__(self, game, x, y):
+        Mob.__init__(self, game, x, y)
+        self.image = self.game.runner_img
+        self.hit_rect = RUNNER_HIT_RECT.copy()
+        self.speed = choice(RUNNER_SPEEDS)
+        self.avoid_rad = RUNNER_AVOID_RADIUS
+
+    def rotate(self):
+        self.image = pg.transform.rotate(self.game.runner_img, self.rot)
+
 
 class Bullet(pg.sprite.Sprite):
     def __init__(self, game, pos, dir, damage):
@@ -405,6 +424,7 @@ class Item(pg.sprite.Sprite):
         self.groups = game.all_sprites, game.items
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
+        self.ratio = ratio
         self.ogImage = pg.transform.scale(game.item_images[item_type], ratio)
         if not item_type in GUN_IMAGES:
             self.ogImage.set_colorkey(BLACK)
@@ -416,15 +436,27 @@ class Item(pg.sprite.Sprite):
         self.item_alpha = chain(ITEM_ALPHA * 4)
         self.counter = ITEM_FADE_MIN
         self.increment = 3
+        self.visible = True
+        self.time_picked_up = 0
 
     def update(self):
         # Fade in/out animation --> see main#draw
-        self.image = self.ogImage.copy()
-        self.counter += self.increment
-        if self.counter > ITEM_FADE_MAX or self.counter < ITEM_FADE_MIN:
-            self.increment = -self.increment
-        self.image.fill((255,255,255, min(255,self.counter)), special_flags=pg.BLEND_RGBA_MULT)
-        self.rect.center = self.pos
+        if self.visible:
+            self.image = self.ogImage.copy()
+            self.counter += self.increment
+            if self.counter > ITEM_FADE_MAX or self.counter < ITEM_FADE_MIN:
+                self.increment = -self.increment
+            self.image.fill((255,255,255, min(255,self.counter)), special_flags=pg.BLEND_RGBA_MULT)
+            self.rect.center = self.pos
+        else:
+            now = pg.time.get_ticks()
+            if now - self.time_picked_up > 3500:
+                self.visible = True
+
+    def make_invisible(self):
+        self.visible = False
+        self.time_picked_up = pg.time.get_ticks()
+        self.image = pg.Surface(self.ratio).convert_alpha()
 
 class BonusItem(Item):
     def __init__(self, game, pos, axis, ratio):
@@ -457,21 +489,15 @@ class BonusItem(Item):
 
     def activate(self, plyr):
         txt = ""
-        if plyr.stats['bonuses'] % 5 == 0:
-            plyr.stats['speed_bonus'] += 10
+        if plyr.stats['bonuses'] % 3 == 0:
+            plyr.stats['speed_bonus'] += 15
             txt = "SPEED BONUS!"
-        elif plyr.stats['bonuses'] % 4 == 0:
+        elif plyr.stats['bonuses'] % 2 == 0:
             plyr.stats['dmg_bonus'] += 2
             txt = "DAMAGE BONUS!"
-        elif plyr.stats['bonuses'] % 3 == 0:
-            plyr.stats['ammo_bonus'] += 4
-            txt = "AMMO PICKUP BONUS!"
-        elif plyr.stats['bonuses'] % 2 == 0:
-            plyr.stats['fire_rate_bonus'] += 50
-            txt = "FIRE RATE BONUS!"
         else:
-            plyr.stats['accuracy_bonus'] += 4
-            txt = "ACCURACY BONUS!"
+            plyr.stats['ammo_bonus'] += 3
+            txt = "AMMO PICKUP BONUS!"
         Text(self.game, self.pos.x, self.pos.y, txt, 24)
 
 class Tower(Obstacle):

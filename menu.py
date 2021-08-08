@@ -60,7 +60,6 @@ class MainMenu(Menu):
             self.cursor_rect.midtop = (self.newgamex + self.cursor_offsetx, self.newgamey + self.cursor_offsety)
 
     def display_menu(self):
-        self.game.paused = True
         self.run_display = True
         while self.run_display:
             self.game.menu_events()
@@ -348,6 +347,7 @@ class PauseMenu(Menu):
     def display_menu(self):
         self.run_display = True
         while self.run_display:
+            self.game.dt = self.game.clock.tick(FPS) / 1000  # THIS MIGHT BE IT!!!
             self.game.menu_events()
             self.check_input()
             self.game.screen.fill(BLACK)
@@ -361,7 +361,7 @@ class PauseMenu(Menu):
             self.game.draw_text('Save and Quit', self.game.menu_font, 40, WHITE, self.save_quitx, self.save_quity, 'center')
 
             self.draw_cursor()
-            self.blit_screen()
+            self.blit_screen()  # Not the problem
 
     def move_cursor(self):
         if self.game.DOWN_KEY:

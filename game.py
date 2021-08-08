@@ -119,6 +119,7 @@ class Game:
         self.wall_img = pg.image.load(path.join(self.img_folder, WALL_IMG)).convert_alpha()  # Surface
         self.wall_img = pg.transform.scale(self.wall_img, (TILESIZE, TILESIZE))  # can scale image
         self.mob_img = pg.image.load(path.join(self.img_folder, MOB_IMG)).convert_alpha()  # Surface
+        self.runner_img = pg.image.load(path.join(self.img_folder, RUNNER_IMG)).convert_alpha()
         # pg.draw.circle(surface, color, center, radius)  # Each image is a Surface
         self.gun_images = {}
         for gun in GUN_IMAGES:
@@ -225,6 +226,8 @@ class Game:
                 Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             elif tile_object.name == 'zombie':
                 Mob(self, obj_center.x, obj_center.y)  # pass
+            elif tile_object.name == 'runner':
+                Runner(self, obj_center.x, obj_center.y)
             elif tile_object.name == 'tower':
                 Tower(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             elif tile_object.name in ITEM_IMAGES.keys():
@@ -272,6 +275,8 @@ class Game:
             self.events()
             if self.paused:
                 self.pause_menu.display_menu()
+                # self.pause_menu.check_input()  # not the problem
+                # self.pause_menu.move_cursor()  # not the problem
             else:
                 self.update()
             self.draw()
@@ -365,9 +370,10 @@ class Game:
                 self.player.curr_weapon = 'uzi'
                 self.player.ammo['uzi_ammo'] += UZI_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
             elif hit.type == 'pistol_ammo':
-                hit.kill()
-                self.player.ammo['pistol_ammo'] += PISTOL_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
-                self.effects_sounds['ammo_pickup'].play()
+                if hit.visible:
+                    hit.make_invisible()
+                    self.player.ammo['pistol_ammo'] += PISTOL_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
+                    self.effects_sounds['ammo_pickup'].play()
             elif hit.type == 'shotgun_ammo':
                 hit.kill()
                 self.player.ammo['shotgun_ammo'] += SHOTGUN_AMMO_PICKUP_AMT + self.player.stats['ammo_bonus']
@@ -384,6 +390,9 @@ class Game:
                 hit.kill()
                 self.player.comms += 1
                 self.effects_sounds['item_pickup'].play()
+                if self.current_lvl == 'tutorial.tmx':
+                    Text(self, 1136, 384, "Pistol ammo regenerates...")
+
 
         # Bullet touches BonusItem
         hits = pg.sprite.groupcollide(self.items, self.bullets, False, False)

@@ -30,7 +30,7 @@ WALL_IMG = 'tile_179.png'
 
 # Player settings
 PLAYER_MAX_HEALTH = 100
-PLAYER_SPEED = 260  # TODO: Reduce in final game
+PLAYER_SPEED = 700# TODO: Reduce in final game
 PLAYER_ROT_SPEED = 250  # degrees per second
 PLAYER1_IMG = 'manBlue_gun.png'
 PLAYER2_IMG = 'hitman_gun.png'
@@ -78,17 +78,24 @@ WEAPONS['uzi'] = {
 
 LANDMINE_DAMAGE = 35
 LANDMINE_KNOCKBACK = 50
-# 'bullet_size': 'lg'
-# 'bullet_size': 'sm'
 
 # Mob settings
-MOB_IMG = 'zoimbie1_hold.png'
-MOB_SPEEDS = [135, 150, 160, 175]
+MOB_IMG = 'zombie1_hold.png'
+MOB_SPEEDS = [150, 175, 200]
 MOB_HIT_RECT = pg.Rect(0, 0, 30, 30)
 MOB_DAMAGE = 10
 MOB_KNOCKBACK = 25
 MOB_AVOID_RADIUS = 70  # in px
-MOB_DETECT_RADIUS = 400
+MOB_DETECT_RADIUS = 325
+
+# Runner settings
+RUNNER_IMG = 'zombie2_hold.png'
+RUNNER_SPEEDS = [300, 325, 350]
+RUNNER_HIT_RECT = pg.Rect(0, 0, 30, 30)
+RUNNER_DAMAGE = 15
+RUNNER_KNOCKBACK = 30
+RUNNER_AVOID_RADIUS = 45  # in px
+RUNNER_DETECT_RADIUS = 350
 
 # Items
 ITEM_IMAGES = {
@@ -152,7 +159,8 @@ ZOMBIE_DEATH_SOUNDS = ['splat-15.wav']
 WEAPON_SOUNDS = {
     'pistol': ['pistol.wav'],
     'shotgun': ['shotgun.wav'],
-    'uzi': ['pistol.wav']  # TODO
+    'uzi': ['pistol.wav'],
+    'empty': ['empty_gun.wav']
 }
 EFFECTS_SOUNDS = {
     'level_start': 'level_start.wav',
