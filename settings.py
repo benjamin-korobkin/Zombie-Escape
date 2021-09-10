@@ -30,7 +30,7 @@ WALL_IMG = 'tile_179.png'
 
 # Player settings
 PLAYER_MAX_HEALTH = 100
-PLAYER_SPEED = 500# TODO: Reduce in final game
+PLAYER_SPEED = 550# TODO: Reduce in final game
 PLAYER_ROT_SPEED = 250  # degrees per second
 PLAYER1_IMG = 'manBlue_gun.png'
 PLAYER2_IMG = 'hitman_gun.png'
@@ -61,7 +61,7 @@ WEAPONS['shotgun'] = {
     'fire_rate': 1000,
     'kickback': 500,
     'bullet_spread': 24,
-    'damage': 5,
+    'damage': 6,
     'bullet_count': 5,
     'bullet_usage': 1
 }
@@ -71,7 +71,7 @@ WEAPONS['uzi'] = {
     'fire_rate': 175,
     'kickback': 300,
     'bullet_spread': 16,
-    'damage': 4,
+    'damage': 5,
     'bullet_count': 1,
     'bullet_usage': 1
 }
@@ -159,7 +159,7 @@ ZOMBIE_DEATH_SOUNDS = ['splat-15.wav']
 WEAPON_SOUNDS = {
     'pistol': ['pistol.wav'],
     'shotgun': ['shotgun.wav'],
-    'uzi': ['pistol.wav'],
+    'uzi': ['uzi.wav'],
     'empty': ['empty_gun.wav']
 }
 EFFECTS_SOUNDS = {

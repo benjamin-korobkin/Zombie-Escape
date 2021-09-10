@@ -394,7 +394,7 @@ class Game:
                 self.player.comms += 1
                 self.effects_sounds['item_pickup'].play()
                 if self.current_lvl == 'tutorial.tmx':
-                    Text(self, 1136, 384, "Pistol ammo regenerates...")
+                    Text(self, 2000, 200, "Pistol ammo regenerates...")
 
 
         # Bullet touches BonusItem
@@ -446,7 +446,7 @@ class Game:
             #    sprite.draw_health()
             self.screen.blit(sprite.image, self.camera.apply_sprite(sprite))
             if self.draw_debug:
-                if not isinstance(sprite, (Item, Text)):
+                if not isinstance(sprite, (Item, Text, Tower)):
                     pg.draw.rect(self.screen, GREEN, self.camera.apply_rect(sprite.hit_rect), 1)
         if self.draw_debug:
             for wall in self.walls:
