@@ -446,7 +446,8 @@ class Game:
             #    sprite.draw_health()
             self.screen.blit(sprite.image, self.camera.apply_sprite(sprite))
             if self.draw_debug:
-                pg.draw.rect(self.screen, GREEN, self.camera.apply_rect(sprite.hit_rect), 1)
+                if not isinstance(sprite, (Item, Text)):
+                    pg.draw.rect(self.screen, GREEN, self.camera.apply_rect(sprite.hit_rect), 1)
         if self.draw_debug:
             for wall in self.walls:
                 pg.draw.rect(self.screen, GREEN, self.camera.apply_rect(wall.rect), 1)

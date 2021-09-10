@@ -46,7 +46,6 @@ class Player(pg.sprite.Sprite):
         self.rect.y = y
         self.hit_rect = PLAYER_HIT_RECT
         self.hit_rect.center = self.rect.center
-        #self.image.set_colorkey(BLACK)
         # x and y determine where the plyr will be drawn. See update()
         # self.x = x * TILESIZE
         # self.y = y * TILESIZE
@@ -196,11 +195,11 @@ class Mob(pg.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
         self.hit_rect = MOB_HIT_RECT.copy()
-        self.hit_rect.center = self.hit_rect.center  # fixed a bug, similar to what we had earlier w plyr
         self.pos = vec(x, y)
         self.vel = vec(0, 0)
         self.acc = vec(0, 0)
         self.rect.center = self.pos
+        self.hit_rect.center = self.rect.center  # Trying to fix a bug
         self.rot = 0
         self.max_health = 50
         self.health = 50
