@@ -440,13 +440,13 @@ class Item(pg.sprite.Sprite):
         self.time_picked_up = 0
 
     def update(self):
-        # Fade in/out animation --> see main#draw
+        # Fade in/out animation --> see game#draw
         if self.visible:
             self.image = self.ogImage.copy()
             self.counter += self.increment
             if self.counter > ITEM_FADE_MAX or self.counter < ITEM_FADE_MIN:
                 self.increment = -self.increment
-            self.image.fill((255,255,255, min(255,self.counter)), special_flags=pg.BLEND_RGBA_MULT)
+            self.image.fill((255, 255, 255, min(255, self.counter)), special_flags=pg.BLEND_RGBA_MULT)
             self.rect.center = self.pos
         else:
             now = pg.time.get_ticks()
@@ -520,6 +520,25 @@ class Text(pg.sprite.Sprite):
         self.image = font.render(text, True, BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
+
+class Fade(pg.sprite.Sprite):
+    def __init__(self, direction):
+        super().__init__()
+        self.rect = pg.display.get_surface().get_rect()
+        self.image = pg.Surface(self.rect.size, flags=pg.SRCALPHA)
+        self.direction = direction
+        #self.alpha = 0 if direction > 0 else self.alpha = 255
+
+    def update(self):
+        if self.direction > 0:
+            self.image.fill(0, 0, 0, self.alpha)
+        elif self.direction < 0:
+            self.image.fill(255, 255, 255, self.alpha)
+        self.alpha += self.direction
+        if self.alpha > 255 or self.alpha < 0:
+            self.kill()
+
+
 
 class Spritesheet:
     # Utility class for loading and parsing spritesheets

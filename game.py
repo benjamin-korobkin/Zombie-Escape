@@ -45,6 +45,7 @@ class Game:
         self.all_sounds = []
         self.soundfx_lvl = .8
         self.music_lvl = .8
+        self.player = None
         self.load_data()
         self.main_menu = MainMenu(self)
         self.options_menu = OptionsMenu(self)
@@ -263,6 +264,7 @@ class Game:
         self.show_story_screen(LEVELS[self.current_lvl]['story'])
         self.effects_sounds['level_start'].play()
 
+
     def game_loop(self):
         # game loop - set self.playing = False to end the game
         pg.mixer.music.stop()
@@ -284,12 +286,13 @@ class Game:
 
     def quit(self):
         try:
-            with open('savefile.txt', 'w') as f:
-                for stat in self.player.stats.values():
-                    f.write(str(stat))
-                    f.write('\n')
-                savedata = self.current_lvl
-                f.write(savedata)
+            if self.player is not None:
+                with open('savefile.txt', 'w') as f:
+                    for stat in self.player.stats.values():
+                        f.write(str(stat))
+                        f.write('\n')
+                    savedata = self.current_lvl
+                    f.write(savedata)
         except:
             print("Couldn't properly save.")
         finally:
