@@ -11,6 +11,7 @@
 # Sound effects from freesound.org: KlawyKogut, 
 
 from game import *
+from settings import *
 
 # create the game object
 g = Game()
@@ -22,4 +23,8 @@ while g.running:
         g.load_level(level_name=savedata[0], stats=savedata[1])
         while g.playing:
             g.game_loop()  # Runs the game loop
-            g.show_go_screen()
+    if g.game_over:
+        # g.game_over_menu.display_menu()
+        g.show_go_screen()
+    else:
+        g.show_story_screen(LEVELS['ending']['story'])

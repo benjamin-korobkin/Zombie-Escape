@@ -30,7 +30,7 @@ WALL_IMG = 'tile_179.png'
 
 # Player settings
 PLAYER_MAX_HEALTH = 100
-PLAYER_SPEED = 550# TODO: Reduce in final game
+PLAYER_SPEED = 250  # TODO: Change in final game
 PLAYER_ROT_SPEED = 250  # degrees per second
 PLAYER1_IMG = 'manBlue_gun.png'
 PLAYER2_IMG = 'hitman_gun.png'
@@ -47,7 +47,7 @@ WEAPONS = {}
 WEAPONS['pistol'] = {
     'bullet_speed': 750,
     'bullet_lifetime': 1250,
-    'fire_rate': 350,  # todo: Increase in final game
+    'fire_rate': 375,
     'kickback': 200,
     'bullet_spread': 6,
     'damage': 10,
@@ -81,7 +81,7 @@ LANDMINE_KNOCKBACK = 50
 
 # Mob settings
 MOB_IMG = 'zombie1_hold.png'
-MOB_SPEEDS = [150, 175, 200]
+MOB_SPEEDS = [220, 240, 260]
 MOB_HIT_RECT = pg.Rect(0, 0, 30, 30)
 MOB_DAMAGE = 10
 MOB_KNOCKBACK = 25
@@ -90,7 +90,7 @@ MOB_DETECT_RADIUS = 325
 
 # Runner settings
 RUNNER_IMG = 'zombie2_hold.png'
-RUNNER_SPEEDS = [300, 325, 350]
+RUNNER_SPEEDS = [350]
 RUNNER_HIT_RECT = pg.Rect(0, 0, 30, 30)
 RUNNER_DAMAGE = 15
 RUNNER_KNOCKBACK = 30
@@ -120,10 +120,10 @@ GUN_IMAGES = {
 }
 
 # Item effectiveness
-HEALTH_PICKUP_AMT = 20
-PISTOL_AMMO_PICKUP_AMT = 7
+HEALTH_PICKUP_AMT = 25
+PISTOL_AMMO_PICKUP_AMT = 6
 SHOTGUN_AMMO_PICKUP_AMT = 6
-UZI_AMMO_PICKUP_AMT = 14
+UZI_AMMO_PICKUP_AMT = 12
 
 # Effects
 MUZZLE_FLASHES = ["whitePuff15.png", "whitePuff16.png", "whitePuff17.png", "whitePuff18.png"]
@@ -137,7 +137,7 @@ DAMAGE_ALPHA = [i for i in range(0, 255, 20)]
 ITEM_ALPHA = [i for i in range(0, 255, 2)]
 ITEM_FADE_MIN = 50
 ITEM_FADE_MAX = 245
-NIGHT_COLOR = (25, 25, 25)
+NIGHT_COLOR = (200, 200, 200)
 LIGHT_RADIUS = (525, 525)
 LIGHT_MASK = 'light_350_med.png'
 
@@ -152,6 +152,7 @@ ITEMS_LAYER = 1
 # Sounds
 BG_MUSIC = 'Disturbed-Soundscape.ogg'
 MENU_MUSIC = 'espionage.ogg'
+LVL1_MUSIC = 'City-of-the-Disturbed.ogg'
 PLAYER_HIT_SOUNDS = ['pain/8.wav', 'pain/9.wav', 'pain/10.wav', 'pain/11.wav']
 ZOMBIE_MOAN_SOUNDS = ['brains2.wav', 'brains3.wav', 'zombie-roar-1.wav', 'zombie-roar-2.wav',
                       'zombie-roar-3.wav', 'zombie-roar-5.wav', 'zombie-roar-6.wav', 'zombie-roar-7.wav']
@@ -177,12 +178,16 @@ STORIES = {
     'tutorial': ["Been a while since I came out of hiding.",
                  "Supplies are running low and I don't know how much longer "
                  "things can last.", "There's a tower here I can use to communicate with other survivors.",
-                 "I just need to find a device for communication.", "Well, won't do any good to just to sit here.",
-                 "I'll have to fight my way out and pray that I can reach the tower alive."],
+                 "I just need to find the device for communication.", "Well... won't do any good to just sit here.",
+                 "I need to find that comms device... I pray that I can get back to the tower alive."],
 
-    'level1': ["Received a distress call.", "Didn't come with much info. Likely a lone survivor.", "Unlikely"
-               " chances they'll survive.", "Still, it's a good excuse to clear the local area of zombies.",
-               "Been waiting to bring out the big guns.", "Time to go to work >"]
+    'level1': ["Received a distress call.", "Didn't come with much info. Likely a lone survivor.", "Probably"
+               " won't survive.", "Still, it's a good excuse to clear the local area of zombies.",
+               "Been waiting to bring out the big guns.", "Time to go to work >"],
+
+    'ending': ["IF YOU ENJOYED THIS EXPERIENCE AND WANT ME TO BUILD THE REST OF THE GAME,",
+               "LET ME KNOW IN THE COMMENTS!","",
+               "YOU CAN QUIT THE GAME NOW OR PRESS ANY KEY TO RETURN TO THE MAIN MENU."]
 }
 
 LEVELS = {
@@ -196,5 +201,8 @@ LEVELS = {
         'objective': 'kill_all_zombies',
         'plyr': PLAYER2_IMG,
         'story': STORIES['level1']
+    },
+    'ending': {
+        'story': STORIES['ending']
     }
 }

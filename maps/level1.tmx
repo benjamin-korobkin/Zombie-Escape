@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="50" height="30" tilewidth="64" tileheight="64" infinite="0" nextlayerid="6" nextobjectid="178">
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="50" height="30" tilewidth="64" tileheight="64" infinite="0" nextlayerid="6" nextobjectid="197">
  <tileset firstgid="1" source="Kenney Topdown Shooter Pack.tsx"/>
  <layer id="1" name="ground" width="50" height="30">
   <data encoding="csv">
@@ -202,9 +202,7 @@
   <object id="125" name="zombie" x="2816" y="384" width="64" height="64"/>
   <object id="126" name="zombie" x="2432" y="384" width="64" height="64"/>
   <object id="127" name="zombie" x="64" y="1408" width="64" height="64"/>
-  <object id="128" name="pistol_ammo" x="1344" y="1664" width="32" height="32"/>
-  <object id="129" name="pistol_ammo" x="912" y="80" width="32" height="32"/>
-  <object id="130" name="pistol_ammo" x="1424" y="192" width="32" height="32"/>
+  <object id="129" name="pistol_ammo" x="784" y="96" width="32" height="32"/>
   <object id="131" name="uzi_ammo" x="1984" y="80" width="32" height="32"/>
   <object id="132" name="uzi_ammo" x="1776" y="736" width="32" height="32"/>
   <object id="133" name="uzi_ammo" x="1760" y="1136" width="32" height="32"/>
@@ -243,9 +241,26 @@
   <object id="170" name="wall" x="640" y="1600" width="256" height="16"/>
   <object id="171" name="wall" x="2448" y="704" width="32" height="512"/>
   <object id="172" name="wall" x="2832" y="704" width="32" height="512"/>
-  <object id="173" name="zombie" x="784" y="1808" width="64" height="64"/>
+  <object id="173" name="runner" x="784" y="1808" width="64" height="64"/>
   <object id="174" name="uzi_ammo" x="3088" y="896" width="32" height="32"/>
   <object id="175" name="uzi_ammo" x="2976" y="1136" width="32" height="32"/>
   <object id="176" x="320" y="64" width="48" height="48"/>
+  <object id="178" name="runner" x="2624" y="1760" width="64" height="64"/>
+  <object id="180" name="runner" x="2784" y="80" width="64" height="64"/>
+  <object id="181" name="zombie" x="1552" y="384" width="64" height="64"/>
+  <object id="182" name="zombie" x="1392" y="656" width="64" height="64"/>
+  <object id="183" name="zombie" x="1584" y="896" width="64" height="64"/>
+  <object id="184" name="zombie" x="1136" y="240" width="64" height="64"/>
+  <object id="185" name="zombie" x="1840" y="336" width="64" height="64"/>
+  <object id="186" name="zombie" x="1216" y="880" width="64" height="64"/>
+  <object id="187" name="zombie" x="1184" y="1296" width="64" height="64"/>
+  <object id="188" name="zombie" x="1536" y="1408" width="64" height="64"/>
+  <object id="189" name="zombie" x="1872" y="1632" width="64" height="64"/>
+  <object id="190" name="runner" x="2176" y="896" width="64" height="64"/>
+  <object id="191" name="runner" x="2176" y="1488" width="64" height="64"/>
+  <object id="192" name="runner" x="2176" y="320" width="64" height="64"/>
+  <object id="193" name="zombie" x="1344" y="1616" width="64" height="64"/>
+  <object id="194" name="zombie" x="592" y="1408" width="64" height="64"/>
+  <object id="196" name="pistol_ammo" x="528" y="464" width="32" height="32"/>
  </objectgroup>
 </map>

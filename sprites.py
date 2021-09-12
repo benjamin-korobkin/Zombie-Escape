@@ -280,6 +280,7 @@ class Runner(Mob):
         Mob.__init__(self, game, x, y)
         self.image = self.game.runner_img
         self.hit_rect = RUNNER_HIT_RECT.copy()
+        self.hit_rect.center = self.rect.center
         self.speed = choice(RUNNER_SPEEDS)
         self.avoid_rad = RUNNER_AVOID_RADIUS
 
@@ -489,10 +490,10 @@ class BonusItem(Item):
     def activate(self, plyr):
         txt = ""
         if plyr.stats['bonuses'] % 3 == 0:
-            plyr.stats['speed_bonus'] += 15
+            plyr.stats['speed_bonus'] += 10
             txt = "SPEED BONUS!"
         elif plyr.stats['bonuses'] % 2 == 0:
-            plyr.stats['dmg_bonus'] += 2
+            plyr.stats['dmg_bonus'] += 3
             txt = "DAMAGE BONUS!"
         else:
             plyr.stats['ammo_bonus'] += 3

@@ -32,6 +32,7 @@ class Game:
         pg.mixer.quit()
         pg.mixer.pre_init(22050, -16, 2, 1024)
         pg.init()
+        self.current_music = MENU_MUSIC
         self.running = True
         self.playing = False  # Only true when player selects 'new game' or 'continue'
         self.display = pg.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -43,7 +44,7 @@ class Game:
         self.clock = pg.time.Clock()
         pg.key.set_repeat(500, 100)  # Allows you to hold down a key
         self.all_sounds = []
-        self.soundfx_lvl = .8
+        self.soundfx_lvl = .6
         self.music_lvl = .8
         self.player = None
         self.load_data()
@@ -53,10 +54,12 @@ class Game:
         self.volume_menu = VolumeMenu(self)
         self.controls_menu = ControlsMenu(self)
         self.pause_menu = PauseMenu(self)
+        self.game_over_menu = GameOverMenu(self)
         self.curr_menu = self.main_menu
         self.prev_menu = self.main_menu
         pg.mixer.music.play(loops=-1)
         self.level_complete = False
+        self.game_over = False
 
     def toggle_fullscreen(self):
         self.fullscreen = not self.fullscreen
@@ -95,12 +98,14 @@ class Game:
         self.sound_folder = path.join(self.game_folder, 'snd')
         self.music_folder = path.join(self.game_folder, 'music')
         self.map_folder = path.join(self.game_folder, 'maps')
+        # Setting up explosion animation
         self.explosion_sheet = pg.image.load(path.join(self.img_folder, 'explosion.png')).convert_alpha()
         self.explosion_frames = []
         EXPL_WIDTH = 130
         EXPL_HEIGHT = 130
         x = 0
         y = -25
+        # Creating and iterating through each "square" of the explosion spritesheet
         for i in range(5):
             for j in range(5):
                 img = pg.Surface((EXPL_WIDTH, EXPL_HEIGHT))
@@ -195,6 +200,8 @@ class Game:
             self.all_sounds.append(s)
 
     def load_level(self, level_name='tutorial.tmx', stats=None):
+
+        self.game_over = False
         self.all_sprites = pg.sprite.LayeredUpdates()  # Group()
         self.walls = pg.sprite.Group()
         self.towers = pg.sprite.Group()
@@ -261,15 +268,17 @@ class Game:
         self.music_off = False  # placeholders for future option to turn off/on music/sounds
         self.sound_off = False
         self.is_night = False
+        pg.mixer.music.stop()
         self.show_story_screen(LEVELS[self.current_lvl]['story'])
-        self.effects_sounds['level_start'].play()
-
+        if self.current_lvl == 'tutorial.tmx':
+            self.effects_sounds['level_start'].play()
+            self.current_music = BG_MUSIC
+        elif self.current_lvl == 'level1.tmx':
+            self.current_music = LVL1_MUSIC
+        pg.mixer.music.load(path.join(self.music_folder, self.current_music))
+        pg.mixer.music.play(loops=-1)
 
     def game_loop(self):
-        # game loop - set self.playing = False to end the game
-        pg.mixer.music.stop()
-        pg.mixer.music.load(path.join(self.music_folder, BG_MUSIC))
-        pg.mixer.music.play(loops=-1)
         for snd in self.all_sounds:
             snd.set_volume(self.soundfx_lvl)
         while self.playing:
@@ -313,7 +322,7 @@ class Game:
             self.player.pos += vec(MOB_KNOCKBACK, 0).rotate(-hits[0].rot)
             for hit in hits:
                 self.player.health -= MOB_DAMAGE
-                if random() < 0.9:
+                if random() <= 0.9:
                     choice(self.player_hit_sounds).play()
                 hit.vel = vec(0, 0)
 
@@ -329,6 +338,7 @@ class Game:
                 hit.vel = vec(0, 0)
         if self.player.health <= 0:
             self.playing = False
+            self.game_over = True
 
         # Bullets hit mobs
         hits = pg.sprite.groupcollide(self.mobs, self.bullets, False, True)
@@ -411,11 +421,12 @@ class Game:
                 if self.player.comms >= self.comms_req:
                     self.level_complete = True
         elif self.objective == 'kill_all_zombies':
-            if len(self.mobs) == 0:
+            if len(self.mobs) <= 0:  # TODO: Make <= 0
                 self.level_complete = True
 
         if self.level_complete:
             self.player.kill()
+            pg.mixer.music.stop()
             self.level_complete = False
             if self.current_lvl == 'tutorial.tmx':
                 self.load_level('level1.tmx', self.player.stats)
@@ -431,7 +442,8 @@ class Game:
     def render_fog(self):
         # draw the light mask (gradient) onto the fog image
         self.fog.fill(NIGHT_COLOR)
-        self.light_rect.center = self.camera.apply_sprite(self.player).center
+        if self.current_lvl == 'tutorial.tmx':
+            self.light_rect.center = self.camera.apply_sprite(self.player).center
         self.fog.blit(self.light_mask, self.light_rect)  # mask -> light_rect
         # BLEND_MULT blends somehow by multiplying adjacent pixels color's (int values)
         self.screen.blit(self.fog, (0, 0), special_flags=pg.BLEND_MULT)
@@ -448,15 +460,16 @@ class Game:
             if self.draw_debug:
                 if not isinstance(sprite, (Item, Text, Tower)):
                     pg.draw.rect(self.screen, GREEN, self.camera.apply_rect(sprite.hit_rect), 1)
-        if self.draw_debug:
-            for wall in self.walls:
-                pg.draw.rect(self.screen, GREEN, self.camera.apply_rect(wall.rect), 1)
+        # if self.draw_debug:
+        #     for wall in self.walls:
+        #         pg.draw.rect(self.screen, GREEN, self.camera.apply_rect(wall.rect), 1)
         # for wall in self.walls:
         #    pg.draw.rect(self.screen, WHITE, wall.rect, 2)
         # Draw player's rect. Good for debugging.   Thickness of 2
         # pg.draw.rect(self.screen, WHITE, self.player.hit_rect, 2)
-        if self.is_night:
-            self.render_fog()
+        self.render_fog()
+        # if self.is_night:
+        #     self.render_fog()
         draw_health(self.screen, 5, 5, self.player.health / PLAYER_MAX_HEALTH)
 
         # Display current weapon
@@ -519,18 +532,20 @@ class Game:
         for line in txt:
             self.draw_text(line, self.menu_font, 34, LIGHTGREY, 40, txt_height, align="w")
             txt_height += 80
-        if self.current_lvl == 'tutorial.tmx':
+        if self.current_lvl == 'tutorial.tmx' and self.playing:
             self.draw_text('PRESS ANY KEY TO CONTINUE', self.menu_font, 36, RED, WINDOW_WIDTH / 2, txt_height + 50,
                            align="center")
+        if self.current_lvl == 'ending':
+            self.draw_text("DEMO COMPLETE", g.title_font, 50, GREEN,
+                        WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, align="s")
+
         pg.display.flip()
         self.wait_for_key()
 
     def show_go_screen(self):
         self.screen.fill(BLACK)
-        self.draw_text("GAME OVER", self.title_font, 120, RED,
+        self.draw_text("GAME OVER", self.title_font, 80, RED,
                        WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, align="center")
-        self.draw_text("PRESS ANY KEY TO CONTINUE", self.title_font, 48, WHITE,
-                       WINDOW_WIDTH / 2, WINDOW_HEIGHT * 3 / 4, align="center")
         pg.display.flip()
         self.wait_for_key()
 
