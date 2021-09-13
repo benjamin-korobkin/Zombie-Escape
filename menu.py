@@ -31,8 +31,7 @@ class Menu:
                     for stat in temp_stats:
                         self.curr_stats[stat]
         except:
-            print("Trouble reading the save file in menu.py")
-
+            pass
 class MainMenu(Menu):
     def __init__(self, game):
         Menu.__init__(self, game)

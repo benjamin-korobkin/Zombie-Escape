@@ -303,7 +303,7 @@ class Game:
                     savedata = self.current_lvl
                     f.write(savedata)
         except:
-            print("Couldn't properly save.")
+            pass
 
     def quit(self):
         self.save_progress()

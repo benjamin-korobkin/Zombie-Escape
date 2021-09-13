@@ -67,7 +67,6 @@ class Player(pg.sprite.Sprite):
         }
         if stats:
             self.stats = stats
-            print(stats)
         else:
             self.stats = {
                 'accuracy_bonus': 0,
