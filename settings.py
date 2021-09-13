@@ -30,7 +30,7 @@ WALL_IMG = 'tile_179.png'
 
 # Player settings
 PLAYER_MAX_HEALTH = 100
-PLAYER_SPEED = 250  # TODO: Change in final game
+PLAYER_SPEED = 245
 PLAYER_ROT_SPEED = 250  # degrees per second
 PLAYER1_IMG = 'manBlue_gun.png'
 PLAYER2_IMG = 'hitman_gun.png'
@@ -47,7 +47,7 @@ WEAPONS = {}
 WEAPONS['pistol'] = {
     'bullet_speed': 750,
     'bullet_lifetime': 1250,
-    'fire_rate': 375,
+    'fire_rate': 425,
     'kickback': 200,
     'bullet_spread': 6,
     'damage': 10,
@@ -61,7 +61,7 @@ WEAPONS['shotgun'] = {
     'fire_rate': 1000,
     'kickback': 500,
     'bullet_spread': 24,
-    'damage': 6,
+    'damage': 7,
     'bullet_count': 5,
     'bullet_usage': 1
 }
@@ -70,8 +70,8 @@ WEAPONS['uzi'] = {
     'bullet_lifetime': 750,
     'fire_rate': 175,
     'kickback': 300,
-    'bullet_spread': 16,
-    'damage': 5,
+    'bullet_spread': 15,
+    'damage': 6,
     'bullet_count': 1,
     'bullet_usage': 1
 }
@@ -90,7 +90,7 @@ MOB_DETECT_RADIUS = 325
 
 # Runner settings
 RUNNER_IMG = 'zombie2_hold.png'
-RUNNER_SPEEDS = [350]
+RUNNER_SPEEDS = [350, 365]
 RUNNER_HIT_RECT = pg.Rect(0, 0, 30, 30)
 RUNNER_DAMAGE = 15
 RUNNER_KNOCKBACK = 30
@@ -138,7 +138,7 @@ ITEM_ALPHA = [i for i in range(0, 255, 2)]
 ITEM_FADE_MIN = 50
 ITEM_FADE_MAX = 245
 NIGHT_COLOR = (200, 200, 200)
-LIGHT_RADIUS = (525, 525)
+LIGHT_RADIUS = (350, 350)
 LIGHT_MASK = 'light_350_med.png'
 
 # Layers
@@ -185,9 +185,9 @@ STORIES = {
                " won't survive.", "Still, it's a good excuse to clear the local area of zombies.",
                "Been waiting to bring out the big guns.", "Time to go to work >"],
 
-    'ending': ["IF YOU ENJOYED THIS EXPERIENCE AND WANT ME TO BUILD THE REST OF THE GAME,",
-               "LET ME KNOW IN THE COMMENTS!","",
-               "YOU CAN QUIT THE GAME NOW OR PRESS ANY KEY TO RETURN TO THE MAIN MENU."]
+    'ending': ["THANKS FOR PLAYING!", "IF YOU ENJOYED THIS EXPERIENCE AND WANT ME TO BUILD", "THE REST OF THE GAME,",
+               "LET ME KNOW IN THE COMMENTS!", "YOU CAN QUIT THE GAME NOW OR PRESS THE ENTER KEY",
+               "TO RETURN TO THE MAIN MENU."]
 }
 
 LEVELS = {

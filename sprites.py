@@ -450,7 +450,7 @@ class Item(pg.sprite.Sprite):
             self.rect.center = self.pos
         else:
             now = pg.time.get_ticks()
-            if now - self.time_picked_up > 45000:
+            if now - self.time_picked_up > 60000:
                 self.visible = True
 
     def make_invisible(self):

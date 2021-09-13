@@ -119,12 +119,12 @@
   <object id="64" name="wall" x="512" y="80" width="2176" height="48"/>
   <object id="65" name="zombie" x="1776" y="768" width="64" height="64"/>
   <object id="67" name="shotgun" x="2384" y="288" width="32" height="32"/>
-  <object id="68" name="You get a shotgun " type="text" x="2384" y="192" width="160.186" height="30.6063" rotation="0.711712">
-   <text wrap="1">Fancy a shotgun?</text>
+  <object id="68" name="SHOTGUN" type="text" x="2416" y="192" width="160.186" height="30.6063" rotation="0.711712">
+   <text wrap="1"></text>
   </object>
   <object id="70" name="uzi" x="816" y="800" width="32" height="32"/>
-  <object id="71" name="How bout an uzi?" type="text" x="832" y="736" width="144.188" height="30.6063" rotation="0.711712">
-   <text wrap="1">How bout an Uzi?</text>
+  <object id="71" name="UZI" type="text" x="832" y="736" width="144.188" height="30.6063" rotation="0.711712">
+   <text wrap="1"></text>
   </object>
   <object id="72" name="shotgun_ammo" x="1264" y="800" width="32" height="32"/>
   <object id="73" name="zombie" x="224" y="1152" width="64" height="64"/>
@@ -167,8 +167,8 @@
   <object id="120" name="comms" x="2992" y="1440" width="32" height="32"/>
   <object id="121" name="pistol_ammo" x="768" y="1072" width="32" height="32"/>
   <object id="122" name="shotgun_ammo" x="848" y="1152" width="32" height="32"/>
-  <object id="123" name="The cell tower.  Find a comms device for it." type="text" x="672" y="144" width="224.38" height="30.6063" rotation="0.711712">
-   <text wrap="1">The cell tower.  Find a comms device for it.</text>
+  <object id="123" name="The cell tower.  Bring back a comms device." type="text" x="672" y="144" width="224.38" height="30.6063" rotation="0.711712">
+   <text wrap="1"></text>
   </object>
   <object id="124" name="zombie" x="144" y="1360" width="64" height="64"/>
   <object id="125" name="zombie" x="208" y="1488" width="64" height="64"/>

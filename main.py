@@ -17,14 +17,14 @@ from settings import *
 g = Game()
 
 while g.running:
-    # g.show_menu_screen("PRESS ANY KEY TO BEGIN")
     savedata = g.curr_menu.display_menu()
     if g.playing:
         g.load_level(level_name=savedata[0], stats=savedata[1])
         while g.playing:
             g.game_loop()  # Runs the game loop
-    if g.game_over:
-        # g.game_over_menu.display_menu()
-        g.show_go_screen()
-    else:
-        g.show_story_screen(LEVELS['ending']['story'])
+        if g.game_over:
+            g.show_go_screen()
+            savedata[0] = g.current_lvl
+        else:
+            g.show_story_screen(LEVELS['ending']['story'])
+            savedata[0] = 'tutorial.tmx'

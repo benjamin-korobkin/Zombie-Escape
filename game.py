@@ -397,7 +397,7 @@ class Game:
                 self.effects_sounds['ammo_pickup'].play()
             elif hit.type == 'landmine':
                 hit.kill()
-                self.player.ammo['landmines'] += 1 + self.player.stats['ammo_bonus']
+                self.player.ammo['landmines'] += 1  # Not getting any bonus stats for mines ;)
                 self.effects_sounds['ammo_pickup'].play()
             elif hit.type == 'comms':
                 hit.kill()
@@ -421,7 +421,7 @@ class Game:
                 if self.player.comms >= self.comms_req:
                     self.level_complete = True
         elif self.objective == 'kill_all_zombies':
-            if len(self.mobs) <= 0:  # TODO: Make <= 0
+            if len(self.mobs) <= 0:
                 self.level_complete = True
 
         if self.level_complete:
@@ -432,6 +432,7 @@ class Game:
                 self.load_level('level1.tmx', self.player.stats)
             elif self.current_lvl == 'level1.tmx':
                 self.playing = False
+                self.current_lvl = 'ending'
 
     def draw_grid(self):
         for x in range(0, WINDOW_WIDTH, TILESIZE):
@@ -442,8 +443,7 @@ class Game:
     def render_fog(self):
         # draw the light mask (gradient) onto the fog image
         self.fog.fill(NIGHT_COLOR)
-        if self.current_lvl == 'tutorial.tmx':
-            self.light_rect.center = self.camera.apply_sprite(self.player).center
+        self.light_rect.center = self.camera.apply_sprite(self.player).center
         self.fog.blit(self.light_mask, self.light_rect)  # mask -> light_rect
         # BLEND_MULT blends somehow by multiplying adjacent pixels color's (int values)
         self.screen.blit(self.fog, (0, 0), special_flags=pg.BLEND_MULT)
@@ -532,12 +532,12 @@ class Game:
         for line in txt:
             self.draw_text(line, self.menu_font, 34, LIGHTGREY, 40, txt_height, align="w")
             txt_height += 80
-        if self.current_lvl == 'tutorial.tmx' and self.playing:
-            self.draw_text('PRESS ANY KEY TO CONTINUE', self.menu_font, 36, RED, WINDOW_WIDTH / 2, txt_height + 50,
+        if self.current_lvl != 'ending' and self.playing:
+            self.draw_text('PRESS THE ENTER KEY TO CONTINUE', self.menu_font, 36, RED, WINDOW_WIDTH / 2, txt_height + 50,
                            align="center")
         if self.current_lvl == 'ending':
-            self.draw_text("DEMO COMPLETE", g.title_font, 50, GREEN,
-                        WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, align="s")
+            self.draw_text("DEMO COMPLETE", self.title_font, 50, GREEN,
+                        WINDOW_WIDTH / 2, WINDOW_HEIGHT - 40, align="s")
 
         pg.display.flip()
         self.wait_for_key()
@@ -560,5 +560,5 @@ class Game:
                     self.running = False
                     self.quit()
                 # Use KEYUP instead of KEYDOWN so that player isn't pressing a key as we're starting
-                if event.type == pg.KEYUP:
+                if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
                     waiting = False
