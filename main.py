@@ -6,7 +6,8 @@
 # icons.svg from opengameart, qubodup
 # landmine by Icons8
 # "topdown shooter" art by Kenny.nl
-# Weapon pickup by: Guns by Gary <http://fossilrecords.net/> licensed under CC-BY-SA 3.0 <http://creativecommons.org/licenses/by-sa/3.0/>
+# Weapon pickup by: Guns by Gary <http://fossilrecords.net/>
+# licensed under CC-BY-SA 3.0 <http://creativecommons.org/licenses/by-sa/3.0/>
 # "espionage.ogg" by http://opengameart.org/users/haeldb
 # Sound effects from freesound.org: KlawyKogut, 
 
@@ -24,7 +25,5 @@ while g.running:
             g.game_loop()  # Runs the game loop
         if g.game_over:
             g.show_go_screen()
-            savedata[0] = g.current_lvl
         else:
             g.show_story_screen(LEVELS['ending']['story'])
-            savedata[0] = 'tutorial.tmx'

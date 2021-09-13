@@ -17,21 +17,7 @@ class Menu:
     def blit_screen(self):
         pg.display.update()
 
-class MainMenu(Menu):
-    def __init__(self, game):
-        Menu.__init__(self, game)  # TODO: Use same inheritance technique for sprites
-        text_offset = 60
-        self.show_continue = False
-        self.initial_state = 'new game'
-        self.curr_lvl = 'tutorial.tmx'
-        self.curr_stats = {
-            'accuracy_bonus': 0,
-            'fire_rate_bonus': 0,
-            'ammo_bonus': 0,
-            'dmg_bonus': 0,
-            'speed_bonus': 0,
-            'bonuses': 0
-        }
+    def read_file(self):
         try:
             temp_stats = self.curr_stats
             with open('savefile.txt', 'r') as f:
@@ -47,6 +33,23 @@ class MainMenu(Menu):
         except:
             print("Trouble reading the save file in menu.py")
 
+class MainMenu(Menu):
+    def __init__(self, game):
+        Menu.__init__(self, game)
+        text_offset = 60
+        self.show_continue = False
+        self.initial_state = 'new game'
+        self.curr_lvl = 'tutorial.tmx'
+        self.curr_stats = {
+            'accuracy_bonus': 0,
+            'fire_rate_bonus': 0,
+            'ammo_bonus': 0,
+            'dmg_bonus': 0,
+            'speed_bonus': 0,
+            'bonuses': 0
+        }
+        self.read_file()
+
         self.state = self.initial_state
         self.continuex, self.continuey = self.window_centerx, self.window_centery - text_offset
         self.newgamex, self.newgamey = self.window_centerx, self.window_centery
@@ -60,6 +63,7 @@ class MainMenu(Menu):
 
     def display_menu(self):
         self.run_display = True
+        self.read_file()
         while self.run_display:
             self.game.menu_events()
             self.check_input()

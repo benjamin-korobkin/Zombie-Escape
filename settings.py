@@ -30,7 +30,7 @@ WALL_IMG = 'tile_179.png'
 
 # Player settings
 PLAYER_MAX_HEALTH = 100
-PLAYER_SPEED = 245
+PLAYER_SPEED = 250
 PLAYER_ROT_SPEED = 250  # degrees per second
 PLAYER1_IMG = 'manBlue_gun.png'
 PLAYER2_IMG = 'hitman_gun.png'
@@ -61,7 +61,7 @@ WEAPONS['shotgun'] = {
     'fire_rate': 1000,
     'kickback': 500,
     'bullet_spread': 24,
-    'damage': 7,
+    'damage': 8,
     'bullet_count': 5,
     'bullet_usage': 1
 }
@@ -71,7 +71,7 @@ WEAPONS['uzi'] = {
     'fire_rate': 175,
     'kickback': 300,
     'bullet_spread': 15,
-    'damage': 6,
+    'damage': 7,
     'bullet_count': 1,
     'bullet_usage': 1
 }
@@ -123,7 +123,7 @@ GUN_IMAGES = {
 HEALTH_PICKUP_AMT = 25
 PISTOL_AMMO_PICKUP_AMT = 6
 SHOTGUN_AMMO_PICKUP_AMT = 6
-UZI_AMMO_PICKUP_AMT = 12
+UZI_AMMO_PICKUP_AMT = 14
 
 # Effects
 MUZZLE_FLASHES = ["whitePuff15.png", "whitePuff16.png", "whitePuff17.png", "whitePuff18.png"]

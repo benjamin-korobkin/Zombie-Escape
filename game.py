@@ -293,7 +293,7 @@ class Game:
             self.draw()
             # self.reset_keys()
 
-    def quit(self):
+    def save_progress(self):
         try:
             if self.player is not None:
                 with open('savefile.txt', 'w') as f:
@@ -304,11 +304,13 @@ class Game:
                     f.write(savedata)
         except:
             print("Couldn't properly save.")
-        finally:
-            self.running, self.playing = False, False
-            self.curr_menu.run_display = False
-            pg.quit()
-            sys.exit()
+
+    def quit(self):
+        self.save_progress()
+        self.running, self.playing = False, False
+        self.curr_menu.run_display = False
+        pg.quit()
+        sys.exit()
 
     def update(self):
         # update portion of the game loop
@@ -337,6 +339,7 @@ class Game:
                     choice(self.player_hit_sounds).play()
                 hit.vel = vec(0, 0)
         if self.player.health <= 0:
+            self.save_progress()
             self.playing = False
             self.game_over = True
 
@@ -537,7 +540,7 @@ class Game:
                            align="center")
         if self.current_lvl == 'ending':
             self.draw_text("DEMO COMPLETE", self.title_font, 50, GREEN,
-                        WINDOW_WIDTH / 2, WINDOW_HEIGHT - 40, align="s")
+                        WINDOW_WIDTH / 2, WINDOW_HEIGHT - 50, align="center")
 
         pg.display.flip()
         self.wait_for_key()
@@ -546,6 +549,8 @@ class Game:
         self.screen.fill(BLACK)
         self.draw_text("GAME OVER", self.title_font, 80, RED,
                        WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, align="center")
+        self.draw_text("Press enter to continue", self.title_font, 40, WHITE,
+                       WINDOW_WIDTH / 2, WINDOW_HEIGHT - 50, align="center")
         pg.display.flip()
         self.wait_for_key()
 
@@ -560,5 +565,5 @@ class Game:
                     self.running = False
                     self.quit()
                 # Use KEYUP instead of KEYDOWN so that player isn't pressing a key as we're starting
-                if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
+                if event.type == pg.KEYUP and event.key == pg.K_RETURN:
                     waiting = False
