@@ -1,5 +1,5 @@
 import pygame as pg
-import pygame_menu
+import platform
 from settings import *
 from tilemap import collide_hit_rect
 from random import uniform, choice, randint, random
@@ -456,6 +456,7 @@ class Item(pg.sprite.Sprite):
         self.visible = False
         self.time_picked_up = pg.time.get_ticks()
         self.image = pg.Surface(self.ratio).convert_alpha()
+        self.image.set_colorkey(BLACK)
 
 class BonusItem(Item):
     def __init__(self, game, pos, axis, ratio):
